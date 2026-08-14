@@ -1,0 +1,18 @@
+var PRODUCTS = [
+    {
+        id: 'led12',
+        name: '12" Multicolor LED pad',
+        tagline: 'Reusable sketch pad-draw, erase, repeat endlessly',
+        description: 'A mess-free drawing toy with a magnetic stylus that creates bold black lines on the white surface. Slide the eraser bar to clear the board instantly and start fresh. Includes shaped stamps for adding fun patterns. No ink, no paper waste.',
+        price: 150,
+        minQty: 1,
+        qtyStep: 1,
+        ageRange: '3-8 years',
+        imageCount: 4,
+        discountTiers: [
+            { minQty: 5, percent: 7 },
+            { minQty: 12, percent: 15 }
+        ],
+        placeholderHue: 180
+    }
+];
