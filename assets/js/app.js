@@ -324,10 +324,10 @@ function renderProducts() {
             '<div class="card-content">' +
                 '<h2 class="card-title">' + escapeHtml(product.name) + '</h2>' +
                 '<p class="card-tagline">' + escapeHtml(product.tagline) + '</p>' +
-                '<div class="card-price-row">'+ formatCurrency(product.price) +
-                    '<span class="card-price-unit">Per unit</span>' +
-                    '<div class="card-age">' + escapeHtml(product.ageRange) + '</div>' +
+                '<div class="card-price">'+ formatCurrency(product.price) +
+                    ' <span class="card-price-unit">per unit</span>' +
                 '</div>' +
+                '<div class="card-age">' + escapeHtml(product.ageRange) + '</div>' +
             '</div>';
 
         card.baseImage = images[0];
@@ -537,7 +537,7 @@ function updateWhatsAppLink() {
     var message = generateWhatsAppMessage();
     var encoded = encodeURIComponent(message);
     var phoneNumber = CONFIG.whatsappNumber.replace(/\D/g, '');
-    var url = 'https://wa.me' + phoneNumber + '?text=' + encoded;
+    var url = 'https://wa.me/' + phoneNumber + '?text=' + encoded;
 
     btn.href = url;
 }
