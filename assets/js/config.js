@@ -25,6 +25,6 @@ var CONFIG = {
     defaultDiscountTiers: [
         { minQty: 5, percent: 7 },
         { minQty: 12, percent: 15 }
-    ]
+    ],
     defaultQtyStep: 1
 };
