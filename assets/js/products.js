@@ -7,6 +7,7 @@ var PRODUCTS = [
         price: 150,
         minQty: 1,
         qtyStep: 1,
+        maxQty: 15,
         ageRange: '3-8 years',
         imageCount: 5,
         discountTiers: [
