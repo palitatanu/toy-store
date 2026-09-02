@@ -1,4 +1,4 @@
-// Main Application Logic
+/* Main Application Logic */
 
 // State
 var currentProduct = null;
@@ -14,7 +14,7 @@ function escapeHtml(text) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/'/g, '&#039;');
 }
 
 // Utility: Format currency with rounding to whole units
@@ -175,7 +175,7 @@ function getMaxDiscount(product) {
     return max;
 }
 
-// Hover image roll
+// --- Hover image roll -----------------------------------------------
 // While the pointer rests on a card, its images cross-fade in sequence. Two
 // stacked <img> layers alternate, so there is never a blank frame between images.
 var ROLL_INTERVAL_MS = 1100;
@@ -195,9 +195,9 @@ function stopImageRoll(card) {
 
     var layers = card.querySelectorAll('.card-image');
     if (layers.length === 2) {
-        layers.src = card.baseImage;
-        layers.classList.add('is-visible');
-        layers.classList.remove('is-visible');
+        layers[0].src = card.baseImage;
+        layers[0].classList.add('is-visible');
+        layers[1].classList.remove('is-visible');
     }
 
     var dots = card.querySelectorAll('.card-dot');
@@ -282,7 +282,7 @@ function renderProducts() {
     grid.innerHTML = '';
 
     if (PRODUCTS.length === 0) {
-        grid.innerHTML = '<div class="grid-empty">No products available yet. Add products in assets/js/products.js</div>';
+        grid.innerHTML = '<div class="grid-empty">No products available yet. Add products in assets/js/products.js to get started.</div>';
         return;
     }
 
@@ -291,7 +291,6 @@ function renderProducts() {
             console.warn('Product missing required fields:', product);
             return;
         }
-
         var card = document.createElement('article');
         card.className = 'product-card';
         card.setAttribute('role', 'button');
@@ -303,7 +302,7 @@ function renderProducts() {
 
         var discountBadge = '';
         if (maxDiscount > 0) {
-            discountBadge = '<div class="discount-badge">Save up to ' + maxDiscount + '%</div>';
+            discountBadge = '<div class="discount-badge">Save up to ' + maxDiscount + '% OFF</div>';
         }
 
         var dots = '';
@@ -317,21 +316,21 @@ function renderProducts() {
 
         card.innerHTML =
             '<div class="card-image-container">' +
-                '<img src="' + escapeHtml(images) + '" alt="' + escapeHtml(product.name) + '" class="card-image is-visible">' +
-                '<img alt="" aria-hidden="true" class="card-image" data-layer="1">' +
-                dots +
-                discountBadge +
+            '<img src="' + escapeHtml(images[0]) + '" alt="' + escapeHtml(product.name) + '" class="card-image is-visible" data-layer="0">' +
+            '<img alt="" aria-hidden="true" class="card-image" data-layer="1">' +
+            dots +
+            discountBadge +
             '</div>' +
             '<div class="card-content">' +
                 '<h2 class="card-title">' + escapeHtml(product.name) + '</h2>' +
                 '<p class="card-tagline">' + escapeHtml(product.tagline) + '</p>' +
-                '<div class="card-price-row">' +
+                '<div class="card-price-row">'+ formatCurrency(product.price) +
                     '<span class="card-price-unit">Per unit</span>' +
                     '<div class="card-age">' + escapeHtml(product.ageRange) + '</div>' +
                 '</div>' +
             '</div>';
 
-        card.baseImage = images;
+        card.baseImage = images[0];
 
         if (images.length > 1 && canAnimateRoll()) {
             card.addEventListener('mouseenter', function () {
@@ -346,6 +345,7 @@ function renderProducts() {
     });
 }
 
+// Open modal for product
 function openModal(product) {
     currentProduct = product;
     currentQuantity = product.minQty || CONFIG.defaultMinQty;
@@ -404,7 +404,8 @@ function renderModalContent() {
 
     // Gallery
     var thumbnails = images.map(function(src, i) {
-        return '<img src="' + escapeHtml(src) + '" alt="' + escapeHtml(currentProduct.name) + ' view ' + (i + 1) + '" class="gallery-thumb" tabindex="0" role="button" data-image-index="' + i + '">';
+        return '<img src="' + escapeHtml(src) + '" alt="' + escapeHtml(currentProduct.name + ' view ' + (i + 1)) +
+		'" class="gallery-thumb" tabindex="0" role="button" data-image-index="' + i + '">';
     }).join('');
 
     // Discount tiers
@@ -413,7 +414,6 @@ function renderModalContent() {
         var sorted = currentProduct.discountTiers.slice().sort(function(a, b) {
             return a.minQty - b.minQty;
         });
-
         tierList = sorted.map(function(tier) {
             return '<div>' + tier.minQty + '+ units: ' + tier.percent + '% off</div>';
         }).join('');
@@ -421,8 +421,8 @@ function renderModalContent() {
 
     var tierPanel = tierList ?
         '<div class="discount-panel">' +
-            '<div class="discount-panel-title">Bulk Pricing:</div>' +
-            tierList +
+        '<div class="discount-panel-title">Bulk Pricing:</div>' +
+        tierList +
         '</div>' : '';
 
     var thumbsHtml = images.length > 1 ? '<div class="gallery-thumbs">' + thumbnails + '</div>' : '';
@@ -430,31 +430,32 @@ function renderModalContent() {
     modal.innerHTML =
         '<button id="modal-close" class="modal-close" aria-label="Close product details">&times;</button>' +
         '<div class="modal-layout">' +
-            '<div class="modal-gallery">' +
-                '<img id="gallery-main" src="' + escapeHtml(images) + '" alt="' + escapeHtml(currentProduct.name) + '">' +
-                thumbsHtml +
-            '</div>' +
-            '<div class="modal-details">' +
-                '<h1 id="modal-title" class="modal-title">' + escapeHtml(currentProduct.name) + '</h1>' +
-                '<p class="modal-tagline">' + escapeHtml(currentProduct.tagline) + '</p>' +
-                '<p class="modal-description">' + escapeHtml(currentProduct.description) + '</p>' +
-                '<div class="modal-age">Recommended: ' + escapeHtml(currentProduct.ageRange) + '</div>' +
-                tierPanel +
-                '<div class="quantity-section">' +
-                    '<label for="quantity-input" class="quantity-label">Quantity</label>' +
-                    '<div class="quantity-note">' + escapeHtml(quantityRangeLabel(currentProduct)) + '</div>' +
-                    '<div class="quantity-stepper">' +
-                        '<button id="qty-decrease" class="qty-btn" aria-label="Decrease quantity">&minus;</button>' +
-                        '<input type="number" id="quantity-input" class="qty-input" value="' + currentQuantity + '" min="' + (currentProduct.minQty || CONFIG.defaultMinQty) + '" max="' + getHighestValidQuantity(currentProduct) + '" step="' + (currentProduct.qtyStep || CONFIG.defaultQtyStep) + '">' +
-                        '<button id="qty-increase" class="qty-btn" aria-label="Increase quantity">+</button>' +
-                    '</div>' +
-                '</div>' +
-                '<div id="price-display" class="price-display" role="status" aria-live="polite"></div>' +
-                '<div id="incentive-display" class="incentive-display"></div>' +
-                '<a id="whatsapp-cta" class="whatsapp-btn" href="#" target="_blank" rel="noopener">' +
-                    'Order via WhatsApp' +
-                '</a>' +
-            '</div>' +
+        '<div class="modal-gallery">' +
+        '<img id="gallery-main" src="' + escapeHtml(images[0]) + '" alt="' + escapeHtml(currentProduct.name) + '" class="gallery-main">' +
+        thumbsHtml +
+        '</div>' +
+        '<div class="modal-details">' +
+        '<h1 id="modal-title" class="modal-title">' + escapeHtml(currentProduct.name) + '</h1>' +
+        '<p class="modal-tagline">' + escapeHtml(currentProduct.tagline) + '</p>' +
+        '<p class="modal-description">' + escapeHtml(currentProduct.description) + '</p>' +
+        '<div class="modal-age">Recommended: ' + escapeHtml(currentProduct.ageRange) + '</div>' +
+        tierPanel +
+        '<div class="quantity-section">' +
+        '<label for="quantity-input" class="quantity-label">Quantity</label>' +
+        '<div class="quantity-note">(Minimum: ' + currentProduct.minQty + ')</div>' +
+        '<div class="quantity-stepper">' +
+        '<button id="qty-decrease" class="qty-btn" aria-label="Decrease quantity">−</button>' +
+        '<input type="number" id="quantity-input" class="qty-input" value="' + currentQuantity +
+		'" min="' + currentProduct.minQty + '" step="' + currentProduct.qtyStep + '" aria-label="Quantity">' +
+        '<button id="qty-increase" class="qty-btn" aria-label="Increase quantity">+</button>' +
+        '</div>' +
+        '</div>' +
+        '<div id="price-display" class="price-display" role="status" aria-live="polite"></div>' +
+        '<div id="incentive-display" class="incentive-display"></div>' +
+        '<a id="whatsapp-cta" class="whatsapp-btn" href="#" target="_blank" rel="noopener">' +
+        'Order via WhatsApp <span aria-hidden="true">💬</span>' +
+        '</a>' +
+        '</div>' +
         '</div>';
 
     updatePriceDisplay();
@@ -496,8 +497,8 @@ function updatePriceDisplay() {
     var nextTier = getNextTier(currentProduct, currentQuantity);
     if (nextTier) {
         incentiveDisplay.innerHTML =
-            '<div class="incentive-note">Add ' + nextTier.itemsNeeded + ' more to save ' +
-            nextTier.percent + '%!</div>';
+            '<div class="incentive-note"><span aria-hidden="true">💡</span> Add ' + nextTier.itemsNeeded + ' more to save ' +
+			nextTier.percent + '%</div>';
     } else {
         incentiveDisplay.innerHTML = '';
     }
@@ -553,7 +554,7 @@ function setupFocusTrap() {
 function handleFocusTrap(e) {
     if (focusTrapElements.length === 0) return;
 
-    var firstElement = focusTrapElements;
+    var firstElement = focusTrapElements[0];
     var lastElement = focusTrapElements[focusTrapElements.length - 1];
 
     if (e.shiftKey && document.activeElement === firstElement) {
@@ -628,8 +629,8 @@ function attachModalHandlers() {
 
     // Set first thumb as active
     if (thumbs.length > 0) {
-        thumbs.classList.add('active');
-        thumbs.setAttribute('aria-current', 'true');
+        thumbs[0].classList.add('active');
+        thumbs[0].setAttribute('aria-current', 'true');
     }
 }
 
