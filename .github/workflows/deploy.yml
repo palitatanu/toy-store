@@ -44,7 +44,7 @@ jobs:
               if (seen.has(p.id)) problems.push(`Duplicate id: ${p.id}`);
               seen.add(p.id);
               for (let i = 1; i <= p.imageCount; i++) {
-                const path = `assets/img/${p.id}-${i}.svg`;
+                const path = `assets/img/${p.id}-${i}.png`;
                 if (!fs.existsSync(path)) problems.push(`Missing image: ${path}`);
               }
             }
