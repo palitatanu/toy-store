@@ -1,0 +1,76 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys run at once, and never cancel one halfway through:
+# a cancelled deploy can leave the live site partially updated.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Check every product image actually exists
+        # A product whose image file is missing renders as a broken card. Catching
+        # that here fails the deploy instead of shipping it to real buyers.
+        run: |
+          node -e '
+            const fs = require("fs");
+            const vm = require("vm");
+            const ctx = { console };
+            vm.createContext(ctx);
+            for (const f of ["assets/js/config.js", "assets/js/products.js"]) {
+              vm.runInContext(fs.readFileSync(f, "utf8"), ctx, { filename: f });
+            }
+            const problems = [];
+            const seen = new Set();
+            for (const p of ctx.PRODUCTS) {
+              if (seen.has(p.id)) problems.push(`Duplicate id: ${p.id}`);
+              seen.add(p.id);
+              for (let i = 1; i <= p.imageCount; i++) {
+                const path = `assets/img/${p.id}-${i}.svg`;
+                if (!fs.existsSync(path)) problems.push(`Missing image: ${path}`);
+              }
+            }
+            if (problems.length) {
+              console.error("Deploy stopped:\n" + problems.join("\n"));
+              process.exit(1);
+            }
+            console.log(`OK: ${ctx.PRODUCTS.length} products, all images present`);
+          '
+
+      - name: Warn if the WhatsApp number is still the placeholder
+        # Not fatal, so a preview deploy still works, but it must be loud:
+        # if the placeholder is place every order button goes nowhere.
+        run: |
+          if grep -q "01099999999" assets/js/config.js; then
+            echo "::warning file=assets/js/config.js::WhatsApp number is still the placeholder 01099999999 - order buttons will not reach you. Set whatsappNumber in assets/js/config.js."
+          fi
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
