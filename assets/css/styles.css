@@ -1,719 +1,964 @@
 /* Reset and Base Styles */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html {
-    font-size: 16px;
+  font-size: 16px;
 }
 
-/* Theme tokens - change these to retheme the entire site */
+/* Theme tokens. Dark is the default; the [data-theme="light"] block below overrides
+   it. A script in <head> sets data-theme before first paint, so there is no flash. */
 :root {
-    --bg: #FAF9F7;
-    --surface: #FFFFFF;
-    --surface-alt: #F7F4F0;
-    --surface-muted: #F2EFEB;
+  /* color-scheme makes the browser draw form controls and scrollbars to match */
+  color-scheme: dark;
 
-    --text: #2B2724;
-    --text-muted: #635D57;
+  --bg: #14161A;
+  --surface: #1C1F24;
+  --surface-alt: #22262C;
+  --surface-muted: #2A2F36;
 
-    --primary: #8FA4A6;
-    --primary-tint: #F3E9E2;
-    --success: #147139;
+  --text: #F2F5F5;
+  --text-muted: #A8AEB6;
 
-    --border: #8C8B7E;
-    --scroll-thumb: #CFC8C0;
+  --primary: #EB946D;
+  --primary-tint: #2E232B;
+  --success: #25D366;
 
-    --shadow-sm: 0 1px 2px rgba(43, 39, 36, 0.05);
-    --shadow-md: 0 2px 6px rgba(43, 39, 36, 0.07);
-    --shadow-lg: 0 12px 32px rgba(43, 39, 36, 0.16);
-    --scrim: rgba(43, 39, 36, 0.5);
+  --border: #767A81;
+  --hairline: rgba(255, 255, 255, 0.10);
+  --scroll-thumb: #3A4048;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 55px rgba(0, 0, 0, 0.5);
+  --scrim: rgba(0, 0, 0, 0.7);
+
+  --page-wash: #1F242B;
+  --page-wash-fade: rgba(31, 36, 43, 0);
+  --header-bg: rgba(28, 31, 36, 0.82);
+  --overlay-chip: rgba(12, 14, 17, 0.78);
+  --card-hover-border: rgba(255, 255, 255, 0.20);
+  --card-hover-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 14px 32px rgba(0, 0, 0, 0.45);
+  --bar-shadow: 0 -1px 8px rgba(0, 0, 0, 0.5);
+  --balloon-opacity: 0.30;
+  --shape-stroke: rgba(255, 255, 255, 0.15);
+  --shape-fill: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #F1F2F4;
+  --surface: #FFFFFF;
+  --surface-alt: #F6F6F7;
+  --surface-muted: #EBECEF;
+
+  --text: #1F2124;
+  --text-muted: #5A5E62;
+
+  --primary: #BF4A26;
+  --primary-tint: #F7EDE7;
+  --success: #14713B;
+
+  --border: #83858A;
+  --hairline: rgba(31, 33, 36, 0.09);
+  --scroll-thumb: #C9CCCE;
+
+  --shadow-sm: 0 1px 2px rgba(31, 33, 36, 0.06);
+  --shadow-md: 0 1px 3px rgba(31, 33, 36, 0.08), 0 4px 12px rgba(31, 33, 36, 0.05);
+  --shadow-lg: 0 16px 40px rgba(31, 33, 36, 0.10);
+  --scrim: rgba(31, 33, 36, 0.55);
+
+  --page-wash: #FFFFFF;
+  --page-wash-fade: rgba(255, 255, 255, 0);
+  --header-bg: rgba(255, 255, 255, 0.88);
+  --overlay-chip: rgba(255, 255, 255, 0.9);
+  --card-hover-border: rgba(31, 33, 36, 0.08);
+  --card-hover-shadow: 0 2px 6px rgba(31, 33, 36, 0.08), 0 12px 28px rgba(31, 33, 36, 0.10);
+  --bar-shadow: 0 -1px 6px rgba(31, 33, 36, 0.05);
+  --balloon-opacity: 0.28;
+  --shape-stroke: rgba(31, 33, 36, 0.14);
+  --shape-fill: rgba(31, 33, 36, 0.07);
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 1.5;
-    color: var(--text);
-    background: var(--bg);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text);
+  /* Near-black page with a slightly lighter wash at the top, so the header area
+     lifts away from the catalogue instead of sitting on one flat slab. */
+  background-color: var(--bg);
+  background-image: linear-gradient(180deg, var(--page-wash) 0, var(--page-wash-fade) 280px);
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Header */
 .site-header {
-    background: var(--surface);
-    padding: 24px;
-    box-shadow: var(--shadow-md);
-    position: sticky;
-    top: 0;
-    z-index: 50;
+  /* Translucent + blur so content scrolling under it stays faintly visible.
+     background-color alone is the fallback where backdrop-filter is unsupported. */
+  background-color: var(--header-bg);
+  backdrop-filter: saturate(150%) blur(12px);
+  -webkit-backdrop-filter: saturate(150%) blur(12px);
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--hairline);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Background decoration. Both layers are purely ornamental; hidden from
+   assistive tech, ignore pointer events, and sit behind the content. */
+
+/* Static shapes - fixed, never animated. They give the page some depth
+   without anything moving. */
+.shapes {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.shapes span {
+  position: absolute;
+  border: 1px solid var(--shape-stroke);
+}
+
+/* circles */
+.shapes span:nth-child(1) { top: 8%; left: 8%; width: 190px; height: 190px; border-radius: 50%; }
+.shapes span:nth-child(2) { top: 62%; left: 4%; width: 240px; height: 240px; border-radius: 50%; }
+.shapes span:nth-child(3) { top: 34%; left: 44%; width: 120px; height: 120px; border-radius: 50%; }
+/* rounded squares, tilted */
+.shapes span:nth-child(4) { top: 18%; left: 78%; width: 150px; height: 150px; border-radius: 24px; transform: rotate(18deg); }
+.shapes span:nth-child(5) { top: 74%; left: 12%; width: 110px; height: 110px; border-radius: 18px; transform: rotate(-14deg); }
+/* triangles */
+.shapes span:nth-child(6) { top: 40%; left: 88%; width: 130px; height: 130px; background: var(--shape-fill); clip-path: polygon(50% 0%, 0% 100%, 100% 100%); transform: rotate(25deg); }
+.shapes span:nth-child(7) { top: 82%; left: 48%; width: 100px; height: 100px; background: var(--shape-fill); clip-path: polygon(50% 0%, 0% 100%, 100% 100%); transform: rotate(-8deg); }
+.shapes span:nth-child(8) { top: 52%; left: 18%; width: 90px; height: 90px; background: var(--shape-fill); clip-path: polygon(50% 0%, 0% 100%, 100% 100%); transform: rotate(-35deg); }
+
+/* Colorful balloons drifting up. Only transform and opacity animate, so
+   there is no layout cost while they move. */
+.balloons {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.balloons span {
+  position: absolute;
+  bottom: -180px;
+  /* Balloon-body: wider at the top, tapering to the knot at the bottom. */
+  border-radius: 50% 50% 48% 48% /58% 58% 42% 42%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55) 0, rgba(255, 255, 255, 0) 42%),
+    var(--balloon);
+  opacity: var(--balloon-opacity);
+  animation-name: balloon-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* the knot */
+.balloons span::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%);
+  background: var(--balloon);
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+}
+
+/* the string */
+.balloons span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: 70px;
+  margin-top: 6px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--balloon), transparent);
+}
+
+.balloons span:nth-child(1)  { --balloon: #E8544F; left: 4%;  width: 62px;  height: 78px;  animation-duration: 26s; animation-delay: 0s; }
+.balloons span:nth-child(2)  { --balloon: #F2A73B; left: 13%; width: 48px;  height: 60px;  animation-duration: 33s; animation-delay: 4s; }
+.balloons span:nth-child(3)  { --balloon: #3FA9F5; left: 22%; width: 92px;  height: 118px; animation-duration: 16s; animation-delay: 8s; }
+.balloons span:nth-child(4)  { --balloon: #55C57A; left: 31%; width: 55px;  height: 69px;  animation-duration: 22s; animation-delay: 2s; }
+.balloons span:nth-child(5)  { --balloon: #A770EF; left: 41%; width: 74px;  height: 92px;  animation-duration: 20s; animation-delay: 13s; }
+.balloons span:nth-child(6)  { --balloon: #F2A73B; left: 49%; width: 36px;  height: 44px;  animation-duration: 37s; animation-delay: 7s; }
+.balloons span:nth-child(7)  { --balloon: #E2C530; left: 58%; width: 58px;  height: 72px;  animation-duration: 25s; animation-delay: 5s; }
+.balloons span:nth-child(8)  { --balloon: #4FC3C1; left: 66%; width: 96px;  height: 120px; animation-duration: 15s; animation-delay: 1s; }
+.balloons span:nth-child(9)  { --balloon: #E8544F; left: 75%; width: 46px;  height: 56px;  animation-duration: 29s; animation-delay: 11s; }
+.balloons span:nth-child(10) { --balloon: #3FA9F5; left: 83%; width: 80px;  height: 100px; animation-duration: 17s; animation-delay: 19s; }
+.balloons span:nth-child(11) { --balloon: #55C57A; left: 91%; width: 36px;  height: 46px;  animation-duration: 31s; animation-delay: 3s; }
+.balloons span:nth-child(12) { --balloon: #A770EF; left: 96%; width: 56px;  height: 70px;  animation-duration: 24s; animation-delay: 15s; }
+
+@keyframes balloon-rise {
+  from { transform: translateY(0) rotate(-4deg); opacity: 0; }
+  1%   { opacity: var(--balloon-opacity); }
+  9%   { transform: translateY(-60vh) rotate(4deg); }
+  99%  { opacity: var(--balloon-opacity); }
+  to   { transform: translateY(-125vh) rotate(-3deg); opacity: 0; }
+}
+
+/* Header content aligns to the same grid as the catalogue below it */
+.header-brand {
+  min-width: 0;
+  padding: 0 100px;
+}
+
+@media (max-width: 639px) {
+  .header-brand {
+    padding: 0;
+  }
+}
+
+.header-inner {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 8px;
+  /* Brand is centred in the header; the toggle is taken out of flow and pinned
+     right so it cannot push the title off-centre however long the name is. */
+  text-align: center;
+}
+
+.theme-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+}
+
+@media (max-width: 639px) {
+  .header-inner {
+    padding-right:96px;
+    text-align: left;
+  }
+}
+
+.theme-toggle {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--primary);
+}
+
+.theme-toggle:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .site-subtitle {
+  	display: none;
+  }
 }
 
 .site-title {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    color: var(--primary);
-    text-align: center;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .site-subtitle {
-    margin-top: 4px;
-    font-size: 14px;
-    color: var(--text-muted);
-    text-align: center;
-    max-width: 46ch;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.45;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 60ch;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.45;
 }
 
-/* Keyboard users get a focus ring; mouse users don't. The :focus rules further down
-   remain as a fallback for browsers without :focus-visible support. */
-:focus:not(:focus-visible) {
-    outline: none;
+/* Keyboard users get a focus ring; mouse users don't.
+The :focus rules further downremain as a fallback for browsers without :focus-visible support. */
+*:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* Empty catalog message */
 .grid-empty {
-    grid-column: 1 / -1;
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--text-muted);
-    background: var(--surface);
-    border: 1px solid rgba(43, 39, 36, 0.07);
-    border-radius: 12px;
+  grid-column: 1 / -1;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
 }
 
 /* Main Container */
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+  position: relative;
+  z-index: 1;
 }
 
 @media (max-width: 1023px) {
-    .container {
-        padding: 24px;
-    }
+  .container {
+    padding: 24px;
+  }
 }
 
 @media (max-width: 639px) {
-    .container {
-        padding: 16px;
-    }
+  .container {
+    padding: 16px;
+  }
 }
 
 /* Product Grid */
 .product-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 32px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
 }
 
 @media (max-width: 1023px) {
-    .product-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
-    }
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
 }
 
 @media (max-width: 639px) {
-    .product-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
 }
 
 /* Product Card */
 .product-card {
-    background: var(--surface);
-    border: 1px solid rgba(43, 39, 36, 0.07);
-    border-radius: 12px;
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    cursor: pointer;
-    transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
-    position: relative;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
+  position: relative;
 }
 
 .product-card:hover {
-    border-color: rgba(43, 39, 36, 0.12);
-    box-shadow: 0 6px 18px rgba(43, 39, 36, 0.10);
-    transform: translateY(-3px);
+  border-color: var(--card-hover-border);
+  box-shadow: var(--card-hover-shadow);
+  transform: translateY(-3px);
 }
 
 .product-card:active {
-    transform: scale(0.98);
-    transition: transform 100ms ease;
+  transform: scale(0.98);
+  transition: transform 100ms ease;
 }
 
 .product-card:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* The container owns the aspect ratio so the two image layers can stack inside it */
 .card-image-container {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
-    background: var(--surface-muted);
-    border-radius: 12px 12px 0 0;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--surface-muted);
+  border-radius: 12px 12px 0 0;
 }
 
 /* Two stacked layers cross-fade into each other while the card is hovered.
    Layer 1 has no src until the first hover, so page load stays as light as before. */
 .card-image {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    opacity: 0;
-    transition: opacity 420ms ease, transform 600ms ease;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  opacity: 0;
+  transition: opacity 420ms ease, transform 600ms ease;
 }
 
 .card-image.is-visible {
-    opacity: 1;
+  opacity: 1;
 }
 
 .product-card:hover .card-image {
-    transform: scale(1.04);
+  transform: scale(1.04);
 }
 
 /* Dot indicator - decorative; the accessible way to view every image is the
    gallery inside the product popup, so this is hidden from screen readers. */
 .card-dots {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 5px;
-    padding: 5px 8px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.82);
-    box-shadow: var(--shadow-sm);
-    opacity: 0.75;
-    transition: opacity 200ms ease;
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--overlay-chip);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-sm);
+  opacity: 0.75;
+  transition: opacity 200ms ease;
 }
 
 .product-card:hover .card-dots {
-    opacity: 1;
+  opacity: 1;
 }
 
 .card-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--border);
-    transition: background 250ms ease, transform 250ms ease;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 250ms ease, transform 250ms ease;
 }
 
 .card-dot.is-active {
-    background: var(--primary);
-    transform: scale(1.35);
+  background: var(--primary);
+  transform: scale(1.35);
 }
 
 .discount-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: var(--surface);
-    color: var(--primary);
-    padding: 4px 9px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    box-shadow: var(--shadow-sm);
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--surface);
+  color: var(--primary);
+  border: 1px solid var(--hairline);
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-sm);
 }
 
 .card-content {
-    padding: 16px;
+  padding: 18px 18px 20px;
 }
 
 .card-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 8px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    line-height: 1.3;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
 }
 
 .card-tagline {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .card-price {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 4px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.card-price-unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0;
 }
 
 .card-age {
-    font-size: 14px;
-    color: var(--text-muted);
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 /* Modal Overlay */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--scrim);
-    z-index: 100;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    overflow-y: auto;
-    padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--scrim);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px;
 }
 
 /* Modal Container */
 .modal {
-    position: relative;
-    max-width: 900px;
-    max-height: 90vh;
-    background: var(--surface);
-    border-radius: 16px;
-    overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-    z-index: 101;
-    margin: auto;
+  position: relative;
+  max-width: 900px;
+  max-height: 90vh;
+  background: var(--surface);
+  border-radius: 16px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  z-index: 101;
+  margin: auto;
 }
 
 @media (max-width: 1023px) {
-    .modal-overlay {
-        padding: 0;
-    }
+  .modal-overlay {
+    padding: 0;
+  }
 
-    .modal {
-        position: fixed;
-        inset: 0;
-        max-width: 100%;
-		max-height: 100%;
-		border-radius: 0;
-		overflow-y: auto;
-    }
+  .modal {
+    position: fixed;
+    inset: 0;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    overflow-y: auto;
+  }
 }
 
 /* Modal Close Button */
 .modal-close {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 40px;
-    height: 40px;
-    background: transparent;
-    color: var(--text);
-    font-size: 24px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    z-index: 102;
-    transition: background 150ms ease;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  color: var(--text);
+  border: none;
+  padding: 0;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 102;
+  transition: background 150ms ease;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-close:hover {
-    background: var(--surface-alt);
+  background: var(--surface-alt);
 }
 
 .modal-close:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1023px) {
-    .modal-close {
-        position: fixed;
-        top: 12px;
-        left: 12px;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.96);
-        box-shadow: var(--shadow-md);
-    }
+  .modal-close {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    background: var(--overlay-chip);
+    box-shadow: var(--shadow-md);
+  }
 }
 
 /* Modal Layout */
 .modal-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  padding: 32px;
 }
 
 @media (max-width: 1023px) {
-    .modal-layout {
-        grid-template-columns: 1fr;
-        padding: 0;
-        gap: 0;
-    }
+  .modal-layout {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 0;
+  }
 }
 
 /* Gallery */
 .modal-gallery {
-    position: relative;
+  position: relative;
 }
 
 @media (max-width: 1023px) {
-    .modal-gallery {
-        padding: 0;
-    }
+  .modal-gallery {
+    padding: 0;
+  }
 }
 
 .gallery-main {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 8px;
-    object-fit: cover;
-    background: var(--surface-muted);
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  /* contain, not cover! cover crops whatever does not fit the box, which cut the
+     top and bottom off product photos. The whole item must be visible here. */
+  object-fit: contain;
+  background: var(--surface-muted);
 }
 
 @media (max-width: 1023px) {
-    .gallery-main {
-        aspect-ratio: 4 / 3;
-        border-radius: 0;
-    }
+  .gallery-main {
+    border-radius: 0;
+  }
 }
 
 .gallery-thumbs {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 1023px) {
-    .gallery-thumbs {
-        padding: 20px;
-    }
+  .gallery-thumbs {
+    padding: 20px;
+  }
 }
 
 .gallery-thumb {
-    width: 64px;
-    height: 64px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    object-fit: cover;
-    cursor: pointer;
-    transition: border-color 150ms ease;
-    flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  object-fit: contain;
+  background: var(--surface-muted);
+  cursor: pointer;
+  transition: border-color 150ms ease;
+  flex-shrink: 0;
 }
 
 .gallery-thumb:hover {
-    border-color: var(--text-muted);
+  border-color: var(--text-muted);
 }
 
-.gallery-thumb:active {
-    border-color: var(--primary);
+.gallery-thumb.active {
+  border-color: var(--primary);
 }
 
 .gallery-thumb:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* Modal Details */
 .modal-details {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 1023px) {
-    .modal-details {
-        padding: 0 20px 120px 20px;
-    }
+  .modal-details {
+    padding: 0 20px 120px 20px;
+  }
 }
 
 .modal-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 12px;
-    line-height: 1.2;
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 12px;
+  line-height: 1.2;
 }
 
 .modal-tagline {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 12px;
 }
 
 .modal-description {
-    font-size: 16px;
-    color: var(--text);
-    line-height: 1.6;
-    margin-bottom: 16px;
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 16px;
 }
 
 .modal-age {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
 }
 
 /* Discount Panel */
 .discount-panel {
-    margin-top: 16px;
-    padding: 16px;
-    background: var(--surface-alt);
-    border-radius: 8px;
-    font-size: 14px;
-    margin-bottom: 16px;
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface-alt);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
 }
 
 .discount-panel-title {
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: var(--text);
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
 }
 
 .discount-panel div {
-    line-height: 1.6;
-    color: var(--text-muted);
+  line-height: 1.6;
+  color: var(--text-muted);
 }
 
 .discount-panel-title ~ div {
-    color: var(--text-muted);
+  color: var(--text-muted);
 }
 
 /* Quantity Section */
 .quantity-section {
-    margin-top: 24px;
+  margin-top: 24px;
 }
 
 .quantity-label {
-    display: block;
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: var(--text);
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
 }
 
 .quantity-note {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
 }
 
 .quantity-stepper {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .qty-btn {
-    width: 44px;
-    height: 44px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text);
-    font-size: 20px;
-    cursor: pointer;
-    transition: border-color 150ms ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .qty-btn:hover:not(:disabled) {
-    border-color: var(--primary);
+  border-color: var(--primary);
 }
 
 .qty-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .qty-btn:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .qty-input {
-    width: 80px;
-    height: 40px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 600;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text);
+  width: 80px;
+  height: 40px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .qty-input:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-    border-color: var(--primary);
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-color: var(--primary);
 }
 
 /* Price Display */
 .price-display {
-    margin-top: 24px;
-    padding: 16px;
-    background: var(--surface-alt);
-    border-radius: 8px;
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--surface-alt);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
 }
 
 .price-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 8px;
-    font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 16px;
 }
 
 .price-row:last-of-type {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .price-total {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--primary);
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 .discount-amount {
-    color: var(--success);
-    font-weight: 600;
+  color: var(--success);
+  font-weight: 600;
 }
 
 .savings-note {
-    margin-top: 12px;
-    font-size: 14px;
-    color: var(--success);
-    font-weight: 600;
-    text-align: center;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--success);
+  font-weight: 600;
+  text-align: center;
 }
 
 /* Incentive Display */
 .incentive-display {
-    margin-top: 12px;
+  margin-top: 12px;
 }
 
 .incentive-note {
-    padding: 12px;
-    background: var(--primary-tint);
-    border-left: 2px solid var(--primary);
-    border-radius: 4px;
-    font-size: 14px;
-    color: var(--text);
-    font-weight: 500;
+  padding: 12px;
+  background: var(--primary-tint);
+  border-left: 2px solid var(--primary);
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
 }
 
 /* WhatsApp CTA */
 .whatsapp-btn {
-    display: block;
-    width: 100%;
-    height: 56px;
-    background: var(--success);
-    color: var(--surface);
-    border: none;
-    border-radius: 12px;
-    font-size: 18px;
-    font-weight: 600;
-    text-align: center;
-    text-decoration: none;
-    line-height: 56px;
-    cursor: pointer;
-    transition: filter 150ms ease, transform 150ms ease;
-    margin-top: 32px;
+  display: block;
+  width: 100%;
+  height: 56px;
+  background: var(--success);
+  color: var(--surface);
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  line-height: 56px;
+  cursor: pointer;
+  transition: filter 150ms ease, transform 150ms ease;
+  margin-top: 32px;
 }
 
 .whatsapp-btn:hover {
-    filter: brightness(90%);
+  filter: brightness(90%);
 }
 
 .whatsapp-btn:active {
-    transform: scale(0.98);
+  transform: scale(0.98);
 }
 
 .whatsapp-btn:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1023px) {
-    .whatsapp-btn {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        margin: 0;
-        padding: 16px;
-        height: auto;
-        line-height: 1.4;
-        background: var(--success);
-        box-shadow: 0 -1px 6px rgba(43, 39, 36, 0.07);
-        z-index: 103;
-        border-radius: 0;
-    }
+  .whatsapp-btn {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 16px;
+    height: auto;
+    line-height: 1.4;
+    background: var(--success);
+    box-shadow: var(--bar-shadow);
+    z-index: 103;
+    border-radius: 0;
+  }
 }
 
-/* Animation
-   Only opacity and transform are animated - these are composited by the GPU and
-   never trigger layout, which keeps scrolling smooth on low-end phones.
-   Elements rebuilt by innerHTML (price total, savings, incentive) replay their
-   animation automatically, so no JS is involved in re-triggering. */
+/* Animation Engine
+*
+*
+*
+*/
+
 @keyframes fade-rise {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes pop-in {
-    from { opacity: 0; transform: scale(0.97) translateY(6px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: scale(0.97) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @keyframes value-shift {
-    from { opacity: 0.35; transform: translateY(-3px); }
-    to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0.35; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Cards fade up in sequence as the grid appears.
-   fill-mode is 'backwards' (not 'forwards') on purpose: it holds the start state
-   during the stagger delay but releases afterwards, so the hover lift still works. */
+/*
+*
+*/
 .product-card {
-    animation: fade-rise 340ms ease-out backwards;
+  animation: fade-rise 340ms ease-out backwards;
 }
 
 .product-card:nth-child(1) { animation-delay: 0ms; }
@@ -722,87 +967,70 @@ body {
 .product-card:nth-child(4) { animation-delay: 135ms; }
 .product-card:nth-child(5) { animation-delay: 180ms; }
 .product-card:nth-child(6) { animation-delay: 225ms; }
-.product-card:nth-child(n+7) { animation-delay: 260ms; }
+.product-card:nth-child(n+7) { animation-delay: 270ms; }
 
-/* Modal entrance */
+/*Modal-entrance*/
 .modal-overlay {
-    animation: fade-in 180ms ease-out;
+  animation: fade-in 180ms ease-out;
 }
 
 .modal {
-    animation: pop-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: pop-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* On mobile the modal is fullscreen and holds the fixed-position WhatsApp button.
-   A transform on an ancestor would make it the containing block for that button
-   and nudge it mid-animation, so fade only - no scale - at this width. */
 @media (max-width: 1023px) {
-    .modal {
-        animation: fade-in 180ms ease-out;
-    }
+  .modal {
+    animation: fade-in 180ms ease-out;
+  }
 }
 
-/* Price readout reacts when the quantity changes */
+/*price readout*/
 .price-total,
 .discount-amount {
-    animation: value-shift 260ms ease-out;
+  animation: value-shift 260ms ease-out;
 }
 
 .savings-note,
 .incentive-note {
-    animation: fade-rise 260ms ease-out;
+  animation: fade-rise 260ms ease-out;
 }
 
-/* Honour the OS "reduce motion" setting: some people get motion sickness or
-   vertigo from movement. Everything still works, it just arrives instantly. */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
+  .product-card:hover {
+    transform: none;
+  }
 
-    .product-card:hover {
-        transform: none;
-    }
+  .product-card:hover .card-image {
+    transform: none;
+  }
 
-    .product-card:hover .card-image {
-        transform: none;
-    }
+  .balloons {
+    display: none;
+  }
 }
 
-/* Accessibility */
 .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--surface-muted);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--scroll-thumb);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--primary);
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }

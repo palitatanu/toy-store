@@ -3,14 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToyStore - Bulk Toys for Parties & Events</title>
+    <title>Deep-Ash Collecitons - Bulk Toys for Parties &amp; Events</title>
     <meta name="description" content="Quality toys with bulk discounts. Perfect for birthday parties, school events, and celebrations.">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <script>
+        (function () {
+            try {
+                var saved= localStorage.getItem('toystore-theme');
+                if (saved !== 'light' && saved !=='dark'){
+                    saved=window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                }
+                document.documentElement.setAttribute('data-theme', saved);
+            } catch (e){
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
 </head>
 <body>
+    <div class="shapes" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+    </div>
+    <div class="balloons" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
     <header class="site-header">
-        <h1 class="site-title" id="site-title">ToyStore</h1>
-        <p class="site-subtitle" id="site-subtitle"></p>
+        <div class="header-inner">
+            <div class="header-brand">
+                <h1 class="site-title" id="site-title">Deep-Ash Collections</h1>
+                <p class="site-subtitle" id="site-subtitle"></p>
+            </div>
+            <button type="button" class="theme-toggle" id="theme-toggle">Light mode</button>
+        </div>
     </header>
 
     <main class="container">

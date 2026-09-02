@@ -1,4 +1,4 @@
-/* Main Application Logic */
+// Main Application Logic
 
 // State
 var currentProduct = null;
@@ -14,7 +14,7 @@ function escapeHtml(text) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/'/g, '&#39;');
 }
 
 // Utility: Format currency with rounding to whole units
@@ -53,7 +53,7 @@ function calculatePricing(product, qty) {
     var unitPrice = product.price;
     var discount = calculateDiscount(product, qty);
     var subtotal = unitPrice * qty;
-    var discountAmount = Math.round(subtotal * discount) / 100;
+    var discountAmount = Math.round((subtotal * discount) / 100);
     var total = subtotal - discountAmount;
 
     return {
@@ -72,8 +72,11 @@ function getNextTier(product, currentQty) {
         return a.minQty - b.minQty;
     });
 
+    // A tier past the order limit can never be reached, so promising it would be a lie.
+    var ceiling = getHighestValidQuantity(product);
+
     for (var i = 0; i < sortedTiers.length; i++) {
-        if (currentQty < sortedTiers[i].minQty) {
+        if (currentQty < sortedTiers[i].minQty && sortedTiers[i].minQty <= ceiling) {
             var targetQty = sortedTiers[i].minQty;
             var maxPercent = sortedTiers[i].percent;
             for (var j = i + 1; j < sortedTiers.length && sortedTiers[j].minQty === targetQty; j++) {
@@ -92,25 +95,38 @@ function getNextTier(product, currentQty) {
     return null;
 }
 
+// The largest orderable quantity: the product's own limit, else the site default.
+// Never below minQty, so bad data cannot produce an empty range.
+function getMaxQuantity(product) {
+    var minQty = product.minQty || CONFIG.defaultMinQty;
+    var maxQty = product.maxQty || CONFIG.defaultMaxQty;
+    return maxQty < minQty ? minQty : maxQty;
+}
+
+// The highest valid quantity that is on the step ladder and within the maximum.
+// maxQty itself may not sit on the ladder (min 12, step 6, max 50 tops out at 48).
+function getHighestValidQuantity(product) {
+    var minQty = product.minQty || CONFIG.defaultMinQty;
+    var step = product.qtyStep || CONFIG.defaultQtyStep;
+    var maxQty = getMaxQuantity(product);
+    return minQty + Math.floor((maxQty - minQty) / step) * step;
+}
+
 // Clamp and snap quantity to valid value
 function normalizeQuantity(product, qty) {
     var minQty = product.minQty || CONFIG.defaultMinQty;
     var step = product.qtyStep || CONFIG.defaultQtyStep;
 
-    // Clamp to minimum
     if (qty < minQty) {
         return minQty;
     }
 
-    // Clamp to reasonable maximum
-    if (qty > 10000) {
-        return 10000;
-    }
+    // Snap to the step ladder first, then pull back inside the maximum. Doing it in
+    // this order means the result is always both on-step and within range.
+    var snapped = minQty + Math.round((qty - minQty) / step) * step;
+    var ceiling = getHighestValidQuantity(product);
 
-    // Snap to step
-    var offset = qty - minQty;
-    var snapped = Math.round(offset / step) * step;
-    return minQty + snapped;
+    return snapped > ceiling ? ceiling : snapped;
 }
 
 // Validate and sanitize quantity input
@@ -122,6 +138,27 @@ function validateQuantity(product, value) {
     }
 
     return normalizeQuantity(product, parsed);
+}
+
+// The "(Minimum: 12, Maximum: 48)" line under the Quantity label. The maximum is
+// only mentioned when the product actually sets one, so the site default stays hidden.
+function quantityRangeLabel(product) {
+    var minQty = product.minQty || CONFIG.defaultMinQty;
+    if (!product.maxQty) {
+        return '(Minimum: ' + minQty + ')';
+    }
+    return '(Minimum: ' + minQty + ', Maximum: ' + getHighestValidQuantity(product) + ')';
+}
+
+// Grey out a stopper button once pressing it could not change anything
+function updateStepperState() {
+    var decreaseBtn = document.getElementById('qty-decrease');
+    var increaseBtn = document.getElementById('qty-increase');
+    if (!decreaseBtn || !increaseBtn || !currentProduct) return;
+
+    var minQty = currentProduct.minQty || CONFIG.defaultMinQty;
+    decreaseBtn.disabled = currentQuantity <= minQty;
+    increaseBtn.disabled = currentQuantity >= getHighestValidQuantity(currentProduct);
 }
 
 // Get maximum discount percent for badge
@@ -138,7 +175,7 @@ function getMaxDiscount(product) {
     return max;
 }
 
-// --- Hover image roll -----------------------------------------------
+// Hover image roll
 // While the pointer rests on a card, its images cross-fade in sequence. Two
 // stacked <img> layers alternate, so there is never a blank frame between images.
 var ROLL_INTERVAL_MS = 1100;
@@ -158,9 +195,9 @@ function stopImageRoll(card) {
 
     var layers = card.querySelectorAll('.card-image');
     if (layers.length === 2) {
-        layers[0].src = card.baseImage;
-        layers[0].classList.add('is-visible');
-        layers[1].classList.remove('is-visible');
+        layers.src = card.baseImage;
+        layers.classList.add('is-visible');
+        layers.classList.remove('is-visible');
     }
 
     var dots = card.querySelectorAll('.card-dot');
@@ -206,21 +243,55 @@ function startImageRoll(card, product) {
     }, ROLL_INTERVAL_MS);
 }
 
+// Theme
+// The inline script in index.html already set data-theme before first paint.
+// This only keeps the button label in sync and saves the visitor's choice.
+var THEME_KEY = 'toystore-theme';
+
+function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+        localStorage.setItem(THEME_KEY, theme);
+    } catch (e) {
+        // Private browsing can block storage; the theme still applies for this visit.
+    }
+
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    var next = theme === 'light' ? 'dark' : 'light';
+    btn.textContent = next === 'light' ? 'Light mode' : 'Dark mode';
+    btn.setAttribute('aria-label', 'Switch to ' + next + ' theme');
+}
+
+function setupThemeToggle() {
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    applyTheme(currentTheme());
+    btn.addEventListener('click', function () {
+        applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
+    });
+}
+
 // Render product grid
 function renderProducts() {
     var grid = document.getElementById('product-grid');
     grid.innerHTML = '';
 
     if (PRODUCTS.length === 0) {
-        grid.innerHTML = '<div class="grid-empty">No products available yet. Add products in assets/js/products.js to get started.</div>';
+        grid.innerHTML = '<div class="grid-empty">No products available yet. Add products in assets/js/products.js</div>';
         return;
     }
 
-    PRODUCTS.forEach(function(product, index) {
+    PRODUCTS.forEach(function (product, index) {
         if (!product.name || !product.price || !product.imageCount) {
             console.warn('Product missing required fields:', product);
             return;
         }
+
         var card = document.createElement('article');
         card.className = 'product-card';
         card.setAttribute('role', 'button');
@@ -232,7 +303,7 @@ function renderProducts() {
 
         var discountBadge = '';
         if (maxDiscount > 0) {
-            discountBadge = '<div class="discount-badge">UP TO ' + maxDiscount + '% OFF</div>';
+            discountBadge = '<div class="discount-badge">Save up to ' + maxDiscount + '%</div>';
         }
 
         var dots = '';
@@ -246,19 +317,21 @@ function renderProducts() {
 
         card.innerHTML =
             '<div class="card-image-container">' +
-            '<img src="' + escapeHtml(images[0]) + '" alt="' + escapeHtml(product.name) + '" class="card-image is-visible" data-layer="0">' +
-            '<img alt="" aria-hidden="true" class="card-image" data-layer="1">' +
-            dots +
-            discountBadge +
+                '<img src="' + escapeHtml(images) + '" alt="' + escapeHtml(product.name) + '" class="card-image is-visible">' +
+                '<img alt="" aria-hidden="true" class="card-image" data-layer="1">' +
+                dots +
+                discountBadge +
             '</div>' +
             '<div class="card-content">' +
-            '<h2 class="card-title">' + escapeHtml(product.name) + '</h2>' +
-            '<p class="card-tagline">' + escapeHtml(product.tagline) + '</p>' +
-            '<div class="card-price">' + formatCurrency(product.price) + '</div>' +
-            '<div class="card-age">' + escapeHtml(product.ageRange) + '</div>' +
+                '<h2 class="card-title">' + escapeHtml(product.name) + '</h2>' +
+                '<p class="card-tagline">' + escapeHtml(product.tagline) + '</p>' +
+                '<div class="card-price-row">' +
+                    '<span class="card-price-unit">Per unit</span>' +
+                    '<div class="card-age">' + escapeHtml(product.ageRange) + '</div>' +
+                '</div>' +
             '</div>';
 
-        card.baseImage = images[0];
+        card.baseImage = images;
 
         if (images.length > 1 && canAnimateRoll()) {
             card.addEventListener('mouseenter', function () {
@@ -273,7 +346,6 @@ function renderProducts() {
     });
 }
 
-// Open modal for product
 function openModal(product) {
     currentProduct = product;
     currentQuantity = product.minQty || CONFIG.defaultMinQty;
@@ -332,8 +404,7 @@ function renderModalContent() {
 
     // Gallery
     var thumbnails = images.map(function(src, i) {
-        return '<img src="' + escapeHtml(src) + '" alt="' + escapeHtml(currentProduct.name + ' view ' + (i + 1)) + 
-		'" class="gallery-thumb" tabindex="0" role="button" data-image-index="' + i + '">';
+        return '<img src="' + escapeHtml(src) + '" alt="' + escapeHtml(currentProduct.name) + ' view ' + (i + 1) + '" class="gallery-thumb" tabindex="0" role="button" data-image-index="' + i + '">';
     }).join('');
 
     // Discount tiers
@@ -342,6 +413,7 @@ function renderModalContent() {
         var sorted = currentProduct.discountTiers.slice().sort(function(a, b) {
             return a.minQty - b.minQty;
         });
+
         tierList = sorted.map(function(tier) {
             return '<div>' + tier.minQty + '+ units: ' + tier.percent + '% off</div>';
         }).join('');
@@ -349,8 +421,8 @@ function renderModalContent() {
 
     var tierPanel = tierList ?
         '<div class="discount-panel">' +
-        '<div class="discount-panel-title">Bulk Pricing:</div>' +
-        tierList +
+            '<div class="discount-panel-title">Bulk Pricing:</div>' +
+            tierList +
         '</div>' : '';
 
     var thumbsHtml = images.length > 1 ? '<div class="gallery-thumbs">' + thumbnails + '</div>' : '';
@@ -358,32 +430,31 @@ function renderModalContent() {
     modal.innerHTML =
         '<button id="modal-close" class="modal-close" aria-label="Close product details">&times;</button>' +
         '<div class="modal-layout">' +
-        '<div class="modal-gallery">' +
-        '<img id="gallery-main" src="' + escapeHtml(images[0]) + '" alt="' + escapeHtml(currentProduct.name) + '" class="gallery-main">' +
-        thumbsHtml +
-        '</div>' +
-        '<div class="modal-details">' +
-        '<h1 id="modal-title" class="modal-title">' + escapeHtml(currentProduct.name) + '</h1>' +
-        '<p class="modal-tagline">' + escapeHtml(currentProduct.tagline) + '</p>' +
-        '<p class="modal-description">' + escapeHtml(currentProduct.description) + '</p>' +
-        '<div class="modal-age">Recommended: ' + escapeHtml(currentProduct.ageRange) + '</div>' +
-        tierPanel +
-        '<div class="quantity-section">' +
-        '<label for="quantity-input" class="quantity-label">Quantity</label>' +
-        '<div class="quantity-note">(Minimum: ' + currentProduct.minQty + ')</div>' +
-        '<div class="quantity-stepper">' +
-        '<button id="qty-decrease" class="qty-btn" aria-label="Decrease quantity">−</button>' +
-        '<input type="number" id="quantity-input" class="qty-input" value="' + currentQuantity + 
-		'" min="' + currentProduct.minQty + '" step="' + currentProduct.qtyStep + '" aria-label="Quantity">' +
-        '<button id="qty-increase" class="qty-btn" aria-label="Increase quantity">+</button>' +
-        '</div>' +
-        '</div>' +
-        '<div id="price-display" class="price-display" role="status" aria-live="polite"></div>' +
-        '<div id="incentive-display" class="incentive-display"></div>' +
-        '<a id="whatsapp-cta" class="whatsapp-btn" href="#" target="_blank" rel="noopener">' +
-        'Order via WhatsApp <span aria-hidden="true">💬</span>' +
-        '</a>' +
-        '</div>' +
+            '<div class="modal-gallery">' +
+                '<img id="gallery-main" src="' + escapeHtml(images) + '" alt="' + escapeHtml(currentProduct.name) + '">' +
+                thumbsHtml +
+            '</div>' +
+            '<div class="modal-details">' +
+                '<h1 id="modal-title" class="modal-title">' + escapeHtml(currentProduct.name) + '</h1>' +
+                '<p class="modal-tagline">' + escapeHtml(currentProduct.tagline) + '</p>' +
+                '<p class="modal-description">' + escapeHtml(currentProduct.description) + '</p>' +
+                '<div class="modal-age">Recommended: ' + escapeHtml(currentProduct.ageRange) + '</div>' +
+                tierPanel +
+                '<div class="quantity-section">' +
+                    '<label for="quantity-input" class="quantity-label">Quantity</label>' +
+                    '<div class="quantity-note">' + escapeHtml(quantityRangeLabel(currentProduct)) + '</div>' +
+                    '<div class="quantity-stepper">' +
+                        '<button id="qty-decrease" class="qty-btn" aria-label="Decrease quantity">&minus;</button>' +
+                        '<input type="number" id="quantity-input" class="qty-input" value="' + currentQuantity + '" min="' + (currentProduct.minQty || CONFIG.defaultMinQty) + '" max="' + getHighestValidQuantity(currentProduct) + '" step="' + (currentProduct.qtyStep || CONFIG.defaultQtyStep) + '">' +
+                        '<button id="qty-increase" class="qty-btn" aria-label="Increase quantity">+</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div id="price-display" class="price-display" role="status" aria-live="polite"></div>' +
+                '<div id="incentive-display" class="incentive-display"></div>' +
+                '<a id="whatsapp-cta" class="whatsapp-btn" href="#" target="_blank" rel="noopener">' +
+                    'Order via WhatsApp' +
+                '</a>' +
+            '</div>' +
         '</div>';
 
     updatePriceDisplay();
@@ -406,17 +477,17 @@ function updatePriceDisplay() {
     if (pricing.discount > 0) {
         html += '<div class="price-row">' +
             '<span>Discount (' + pricing.discount + '%):</span>' +
-            '<span class="discount-amount">−' + formatCurrency(pricing.discountAmount) + '</span>' +
+            '<span class="discount-amount">&minus;' + formatCurrency(pricing.discountAmount) + '</span>' +
             '</div>';
     }
 
-    html += '<div class="price-row price-total">' +
+    html += '<div class="price-row price-row-total">' +
         '<span>Total:</span>' +
         '<span>' + formatCurrency(pricing.total) + '</span>' +
         '</div>';
 
     if (pricing.discount > 0) {
-        html += '<div class="savings-note">You save ' + formatCurrency(pricing.discountAmount) + '</div>';
+        html += '<div class="price-row savings-note">You save ' + formatCurrency(pricing.discountAmount) + '!</div>';
     }
 
     display.innerHTML = html;
@@ -425,13 +496,13 @@ function updatePriceDisplay() {
     var nextTier = getNextTier(currentProduct, currentQuantity);
     if (nextTier) {
         incentiveDisplay.innerHTML =
-            '<div class="incentive-note"><span aria-hidden="true">💡</span> Add ' + nextTier.itemsNeeded + ' more to save ' +
-			nextTier.percent + '%</div>';
+            '<div class="incentive-note">Add ' + nextTier.itemsNeeded + ' more to save ' +
+            nextTier.percent + '%!</div>';
     } else {
         incentiveDisplay.innerHTML = '';
     }
 
-    // Update WhatsApp link
+    updateStepperState();
     updateWhatsAppLink();
 }
 
@@ -457,7 +528,7 @@ function generateWhatsAppMessage() {
     return message;
 }
 
-// Update WhatsApp link
+// Update WhatsApp Link
 function updateWhatsAppLink() {
     var btn = document.getElementById('whatsapp-cta');
     if (!btn) return;
@@ -465,7 +536,7 @@ function updateWhatsAppLink() {
     var message = generateWhatsAppMessage();
     var encoded = encodeURIComponent(message);
     var phoneNumber = CONFIG.whatsappNumber.replace(/\D/g, '');
-    var url = 'https://wa.me/' + phoneNumber + '?text=' + encoded;
+    var url = 'https://wa.me' + phoneNumber + '?text=' + encoded;
 
     btn.href = url;
 }
@@ -482,7 +553,7 @@ function setupFocusTrap() {
 function handleFocusTrap(e) {
     if (focusTrapElements.length === 0) return;
 
-    var firstElement = focusTrapElements[0];
+    var firstElement = focusTrapElements;
     var lastElement = focusTrapElements[focusTrapElements.length - 1];
 
     if (e.shiftKey && document.activeElement === firstElement) {
@@ -557,19 +628,28 @@ function attachModalHandlers() {
 
     // Set first thumb as active
     if (thumbs.length > 0) {
-        thumbs[0].classList.add('active');
-        thumbs[0].setAttribute('aria-current', 'true');
+        thumbs.classList.add('active');
+        thumbs.setAttribute('aria-current', 'true');
     }
 }
 
 // Initialize app
 function init() {
-    // Header text comes from config.js so editing the business name is enough
+    // All visible naming comes from config.js, so editing it there is enough.
+    // The values hardcoded in index.html are only what shows before this runs.
     var title = document.getElementById('site-title');
     var subtitle = document.getElementById('site-subtitle');
     if (title && CONFIG.businessName) title.textContent = CONFIG.businessName;
     if (subtitle && CONFIG.siteDescription) subtitle.textContent = CONFIG.siteDescription;
 
+    if (CONFIG.siteTitle) document.title = CONFIG.siteTitle;
+
+    var metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription && CONFIG.siteDescription) {
+        metaDescription.setAttribute('content', CONFIG.siteDescription);
+    }
+
+    setupThemeToggle();
     renderProducts();
 
     // Grid click delegation
@@ -618,3 +698,4 @@ if (document.readyState === 'loading') {
 } else {
     init();
 }
+
