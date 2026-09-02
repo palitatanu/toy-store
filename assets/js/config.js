@@ -22,5 +22,9 @@ var CONFIG = {
     // Minimum viable quantity values (fallback if product data is malformed)
     defaultMinQty: 1,
     defaultMaxQty: 20,
+    defaultDiscountTiers: [
+        { minQty: 5, percent: 7 },
+        { minQty: 12, percent: 15 }
+    ]
     defaultQtyStep: 1
 };

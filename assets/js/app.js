@@ -37,7 +37,7 @@ function getProductImages(product) {
 // Calculate applicable discount for a given quantity
 function calculateDiscount(product, qty) {
     var discount = 0;
-    var tiers = product.discountTiers || [];
+    var tiers = getDiscountTiers(product);
 
     for (var i = 0; i < tiers.length; i++) {
         if (qty >= tiers[i].minQty && tiers[i].percent > discount) {
@@ -67,7 +67,7 @@ function calculatePricing(product, qty) {
 
 // Find next discount tier for incentive display
 function getNextTier(product, currentQty) {
-    var tiers = product.discountTiers || [];
+    var tiers = getDiscountTiers(product);
     var sortedTiers = tiers.slice().sort(function(a, b) {
         return a.minQty - b.minQty;
     });
@@ -101,6 +101,10 @@ function getMaxQuantity(product) {
     var minQty = product.minQty || CONFIG.defaultMinQty;
     var maxQty = product.maxQty || CONFIG.defaultMaxQty;
     return maxQty < minQty ? minQty : maxQty;
+}
+
+function getDiscountTiers(product) {
+    return product.discountTiers || CONFIG.defaultDiscountTiers;
 }
 
 // The highest valid quantity that is on the step ladder and within the maximum.
@@ -163,7 +167,7 @@ function updateStepperState() {
 
 // Get maximum discount percent for badge
 function getMaxDiscount(product) {
-    var tiers = product.discountTiers || [];
+    var tiers = getDiscountTiers(product);
     var max = 0;
 
     for (var i = 0; i < tiers.length; i++) {
@@ -410,8 +414,9 @@ function renderModalContent() {
 
     // Discount tiers
     var tierList = '';
-    if (currentProduct.discountTiers && currentProduct.discountTiers.length > 0) {
-        var sorted = currentProduct.discountTiers.slice().sort(function(a, b) {
+    var currDiscountTiers = getDiscountTiers(currentProduct);
+    if (currDiscountTiers && currDiscountTiers.length > 0) {
+        var sorted = currDiscountTiers.slice().sort(function(a, b) {
             return a.minQty - b.minQty;
         });
         tierList = sorted.map(function(tier) {
@@ -515,7 +520,6 @@ function generateWhatsAppMessage() {
 
     var message = CONFIG.greeting + '\n\n';
     message += 'Product: ' + currentProduct.name + '\n';
-    message += 'Item ID: ' + currentProduct.id + '\n';
     message += 'Quantity: ' + currentQuantity + '\n';
     message += 'Unit Price: ' + formatCurrency(pricing.unitPrice) + '\n';
 

@@ -114,6 +114,14 @@ body {
   z-index: 50;
 }
 
+@media (max-width: 1023px){
+  .site-header {
+    background-color: var(--bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
 /* Background decoration. Both layers are purely ornamental; hidden from
    assistive tech, ignore pointer events, and sit behind the content. */
 
@@ -554,6 +562,8 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
     max-height: 100%;
     border-radius: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 }
 
