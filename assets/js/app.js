@@ -29,7 +29,7 @@ function formatCurrency(amount) {
 function getProductImages(product) {
     var images = [];
     for (var i = 1; i <= product.imageCount; i++) {
-        images.push('assets/img/' + product.id + '-' + i + '.png');
+        images.push('assets/img/'+ product.id +'/' + product.id + '-' + i + '.png');
     }
     return images;
 }
