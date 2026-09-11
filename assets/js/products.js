@@ -77,7 +77,7 @@ var PRODUCTS = [
         qtyStep: 1,
         maxQty: 15,
         ageRange: '2+ years',
-        imageCount: 6,
+        imageCount: 5,
         discountTiers: [
             { minQty: 5, percent: 7 },
             { minQty: 12, percent: 15 }
