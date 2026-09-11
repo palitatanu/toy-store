@@ -8,7 +8,7 @@ var PRODUCTS = [
         minQty: 1,
         qtyStep: 1,
         maxQty: 15,
-        ageRange: '3-8 years',
+        ageRange: '3+ years',
         imageCount: 5,
         discountTiers: [
             { minQty: 5, percent: 7 },
@@ -25,7 +25,7 @@ var PRODUCTS = [
         minQty: 1,
         qtyStep: 1,
         maxQty: 15,
-        ageRange: '3-8 years',
+        ageRange: '3+ years',
         imageCount: 6,
         discountTiers: [
             { minQty: 5, percent: 7 },
@@ -59,7 +59,7 @@ var PRODUCTS = [
         minQty: 1,
         qtyStep: 1,
         maxQty: 15,
-        ageRange: '3-8 years',
+        ageRange: '3+ years',
         imageCount: 6,
         discountTiers: [
             { minQty: 5, percent: 7 },
