@@ -84,4 +84,53 @@ var PRODUCTS = [
         ],
         placeholderHue: 180
     }
+    {
+        id: 'magnetic-board',
+        name: '5-1 Magnetic & white board',
+        tagline: 'A fun and versatile learning companion that lets children switch between magnetic activities and chalk writing anytime!',
+        description: 'Make learning fun, creative, and interactive with this 5-in-1 Double-Sided Writing Board, specially designed for young learners. One side features a magnetic whiteboard surface for arranging colorful magnetic letters, numbers, and shapes, while the reverse side is a chalkboard for drawing, writing, and practicing.',
+        price: 550,
+        minQty: 1,
+        qtyStep: 1,
+        maxQty: 8,
+        ageRange: '3+ years',
+        imageCount: 5,
+        discountTiers: [
+            { minQty: 5, percent: 7 }
+        ],
+        placeholderHue: 180
+    },
+    {
+        id: 'magnetic-hindi',
+        name: 'Magnetic Hindi Swar & Vyanjan Alphabets',
+        tagline: 'Perfect for home, preschool, classroom, and activity-based learning',
+        description: 'Make learning Hindi letters fun and interactive with this colorful Magnetic Swar & Vyanjan Set, designed for young children to recognize, arrange, and practice Hindi alphabets. The set includes brightly colored magnetic letters with smooth, rounded edges that can be easily placed on magnetic surfaces such as boards, refrigerators, or magnetic writing boards.',
+        price: 240,
+        minQty: 2,
+        qtyStep: 2,
+        maxQty: 22,
+        ageRange: '3+ years',
+        imageCount: 2,
+        discountTiers: [
+            { minQty: 6, percent: 7 },
+            { minQty: 14, percent: 15 }
+        ],
+        placeholderHue: 180
+    },
+    {
+        id: 'combo01',
+        name: '5-1 Magnetic & white board + Hindi Swar & Vyanjan',
+        tagline: 'A fun and versatile learning companion, perfect for home, preschool, classroom, and activity-based learning',
+        description: 'Make learning fun, creative, and interactive with this 5-in-1 Double-Sided Writing Board with Magnetic Hindi Swar & Vyanjan Alphabets. One side features a magnetic whiteboard for arranging colorful Hindi letters, numbers, and shapes, while the other side is a chalkboard for writing, drawing, and practice. Perfect for helping children learn Hindi alphabets, letter recognition, spelling, handwriting, and creativity through engaging, hands-on play.',
+        price: 750,
+        minQty: 1,
+        qtyStep: 1,
+        maxQty: 10,
+        ageRange: '3+ years',
+        imageCount: 5,
+        discountTiers: [
+            { minQty: 5, percent: 10 }
+        ],
+        placeholderHue: 180
+    }
 ];
