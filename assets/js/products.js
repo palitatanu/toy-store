@@ -83,7 +83,7 @@ var PRODUCTS = [
             { minQty: 12, percent: 15 }
         ],
         placeholderHue: 180
-    }
+    },
     {
         id: 'magnetic-board',
         name: '5-1 Magnetic & white board',
