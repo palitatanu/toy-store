@@ -807,29 +807,55 @@ function attachModalHandlers() {
         if (prevBtn) prevBtn.addEventListener('click', function() { setActiveImage(activeIndex - 1); });
         if (nextBtn) nextBtn.addEventListener('click', function() { setActiveImage(activeIndex + 1); });
 
-        // Swipe the main photo left/right to move between images. Both listeners
-        // are passive (no preventDefault) and the gesture is only interpreted on
-        // touchend, so this never competes with or blocks the page's native
-        // scrolling - it just additionally reads the gesture.
+        // Swipe the main photo left/right to move between images. The modal frame
+        // itself is one scrollable container on mobile (image + thumbnails +
+        // details all scroll together), so a plain touchend-only check isn't
+        // enough: by the time it fires, the browser may have already claimed the
+        // gesture as a vertical scroll of that frame, even for a mostly-sideways
+        // drag. Instead, touchmove locks onto an axis as soon as the drag is
+        // clearly one or the other - horizontal calls preventDefault() so the
+        // frame stops moving under it, vertical does nothing and lets the
+        // browser's native scroll proceed exactly as if this listener didn't
+        // exist.
         var touchStartX = 0;
         var touchStartY = 0;
+        var swipeAxis = null; // null until the drag is clearly horizontal or vertical
+        var swipeDx = 0;
 
         mainImage.addEventListener('touchstart', function(e) {
             if (e.touches.length !== 1) return;
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
+            swipeAxis = null;
+            swipeDx = 0;
         }, { passive: true });
 
-        mainImage.addEventListener('touchend', function(e) {
-            if (!e.changedTouches || e.changedTouches.length !== 1) return;
-            var dx = e.changedTouches[0].clientX - touchStartX;
-            var dy = e.changedTouches[0].clientY - touchStartY;
+        mainImage.addEventListener('touchmove', function(e) {
+            if (e.touches.length !== 1) return;
+            var dx = e.touches[0].clientX - touchStartX;
+            var dy = e.touches[0].clientY - touchStartY;
 
-            // Require a deliberate, mostly-horizontal drag so an ordinary vertical
-            // scroll or a tap-to-zoom attempt doesn't get mistaken for a swipe.
-            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-                setActiveImage(dx < 0 ? activeIndex + 1 : activeIndex - 1);
+            if (swipeAxis === null) {
+                // Wait for a deliberate move (not the first jittery pixels of a
+                // tap) before committing to an axis.
+                if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+                swipeAxis = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
             }
+
+            if (swipeAxis === 'horizontal') {
+                e.preventDefault();
+                swipeDx = dx;
+            }
+            // swipeAxis === 'vertical': do nothing - this is the frame scroll,
+            // not a photo swipe, so it's left entirely to the browser.
+        }, { passive: false });
+
+        mainImage.addEventListener('touchend', function() {
+            if (swipeAxis === 'horizontal' && Math.abs(swipeDx) > 40) {
+                setActiveImage(swipeDx < 0 ? activeIndex + 1 : activeIndex - 1);
+            }
+            swipeAxis = null;
+            swipeDx = 0;
         }, { passive: true });
     }
 }

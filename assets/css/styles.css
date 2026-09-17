@@ -673,6 +673,10 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
      top and bottom off product photos. The whole item must be visible here. */
   object-fit: contain;
   background: var(--surface-muted);
+  /* Only claim vertical drags for native scrolling; horizontal ones are the
+     swipe-between-photos gesture handled in app.js, which needs to be able to
+     preventDefault() them without fighting the browser for the gesture. */
+  touch-action: pan-y;
 }
 
 @media (max-width: 1023px) {
@@ -687,6 +691,11 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   margin-top: 12px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  /* This strip sits inside the modal's own vertically-scrolling frame, so without
+     this hint a horizontal drag here can get claimed by that outer vertical
+     scroll instead of sliding the strip - same issue as the main photo, same
+     fix: tell the browser upfront which axis belongs to this element. */
+  touch-action: pan-x;
 }
 
 @media (max-width: 1023px) {
