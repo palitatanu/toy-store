@@ -248,6 +248,78 @@ function startImageRoll(card, product) {
     }, ROLL_INTERVAL_MS);
 }
 
+// --- Touch swipe on card images --------------------------------------
+// canAnimateRoll() is false on touch devices, so the hover roll above never
+// runs there - this is the touch equivalent, letting a visitor swipe a card's
+// photo directly on the grid instead of only inside the product modal.
+function setCardImage(card, product, index) {
+    var images = getProductImages(product);
+    var wrapped = (index + images.length) % images.length;
+    card.currentIndex = wrapped;
+
+    var visibleLayer = card.querySelector('.card-image.is-visible') || card.querySelector('.card-image');
+    if (visibleLayer) {
+        visibleLayer.src = images[wrapped];
+    }
+
+    var dots = card.querySelectorAll('.card-dot');
+    for (var i = 0; i < dots.length; i++) {
+        if (i === wrapped) dots[i].classList.add('is-active');
+        else dots[i].classList.remove('is-active');
+    }
+}
+
+function setupCardSwipe(card, product) {
+    var images = getProductImages(product);
+    if (images.length < 2) return;
+
+    var container = card.querySelector('.card-image-container');
+    if (!container) return;
+
+    card.currentIndex = 0;
+
+    // Same axis-lock pattern as the modal gallery: touchmove decides horizontal
+    // vs. vertical as soon as the drag is clearly one or the other, and only
+    // claims (preventDefault) the horizontal case - vertical is left alone so
+    // scrolling past the card on the grid is never affected.
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var swipeAxis = null;
+    var swipeDx = 0;
+
+    container.addEventListener('touchstart', function (e) {
+        if (e.touches.length !== 1) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        swipeAxis = null;
+        swipeDx = 0;
+    }, { passive: true });
+
+    container.addEventListener('touchmove', function (e) {
+        if (e.touches.length !== 1) return;
+        var dx = e.touches[0].clientX - touchStartX;
+        var dy = e.touches[0].clientY - touchStartY;
+
+        if (swipeAxis === null) {
+            if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+            swipeAxis = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
+        }
+
+        if (swipeAxis === 'horizontal') {
+            e.preventDefault();
+            swipeDx = dx;
+        }
+    }, { passive: false });
+
+    container.addEventListener('touchend', function () {
+        if (swipeAxis === 'horizontal' && Math.abs(swipeDx) > 30) {
+            setCardImage(card, product, (card.currentIndex || 0) + (swipeDx < 0 ? 1 : -1));
+        }
+        swipeAxis = null;
+        swipeDx = 0;
+    }, { passive: true });
+}
+
 // Theme
 // The inline script in index.html already set data-theme before first paint.
 // This only keeps the button label in sync and saves the visitor's choice.
@@ -352,6 +424,8 @@ function renderProducts() {
                 stopImageRoll(this);
             });
         }
+
+        setupCardSwipe(card, product);
 
         grid.appendChild(card);
     });

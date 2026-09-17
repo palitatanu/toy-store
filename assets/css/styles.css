@@ -428,6 +428,11 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   overflow: hidden;
   background: var(--surface-muted);
   border-radius: 12px 12px 0 0;
+  /* Swiping between a card's photos (app.js) is a horizontal gesture; scrolling
+     the page past the card is vertical. This tells the browser upfront which
+     one belongs to native handling here, the same fix used on the modal's
+     photo and thumbnail strip. */
+  touch-action: pan-y;
 }
 
 /* Two stacked layers cross-fade into each other while the card is hovered.
