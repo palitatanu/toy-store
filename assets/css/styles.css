@@ -15,6 +15,11 @@ html {
   /* color-scheme makes the browser draw form controls and scrollbars to match */
   color-scheme: dark;
 
+  /* Rounded, high-spirited display face for the brand name, prices and headings -
+     it echoes the balloon motif instead of leaning on the body's system font for
+     everything. Body copy stays on the system stack for reading comfort and speed. */
+  --font-display: 'Baloo 2', 'Segoe UI', system-ui, sans-serif;
+
   --bg: #14161A;
   --surface: #1C1F24;
   --surface-alt: #22262C;
@@ -24,6 +29,7 @@ html {
   --text-muted: #A8AEB6;
 
   --primary: #EB946D;
+  --primary-dark: #D9713F;
   --primary-tint: #2E232B;
   --success: #25D366;
 
@@ -60,6 +66,7 @@ html {
   --text-muted: #5A5E62;
 
   --primary: #BF4A26;
+  --primary-dark: #9C3A1C;
   --primary-tint: #F7EDE7;
   --success: #14713B;
 
@@ -283,27 +290,47 @@ body {
   outline-offset: 2px;
 }
 
-@media (max-width: 639px) {
-  .site-subtitle {
-  	display: none;
-  }
-}
-
 .site-title {
-  font-size: 19px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-size: clamp(19px, 4vw, 22px);
+  font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text);
 }
 
+.site-mark {
+  width: 17px;
+  height: 21px;
+  flex-shrink: 0;
+  fill: var(--primary);
+}
+
 .site-subtitle {
-  margin-top: 2px;
+  margin-top: 3px;
   font-size: 13px;
   color: var(--text-muted);
   max-width: 60ch;
   margin-left: auto;
   margin-right: auto;
   line-height: 1.45;
+}
+
+@media (max-width: 639px) {
+  .site-subtitle {
+    /* A two-line teaser reads as intentional; the full site-header subtitle text is
+       longer than that, so it gets clamped rather than hidden outright - mobile
+       visitors still get the "why buy here" line that was previously stripped away. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: none;
+  }
 }
 
 /* Keyboard users get a focus ring; mouse users don't.
@@ -463,14 +490,14 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   position: absolute;
   top: 12px;
   right: 12px;
-  background: var(--surface);
-  color: var(--primary);
-  border: 1px solid var(--hairline);
-  padding: 4px 9px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  padding: 5px 10px;
   border-radius: 999px;
+  font-family: var(--font-display);
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   box-shadow: var(--shadow-sm);
 }
 
@@ -479,6 +506,7 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 }
 
 .card-title {
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -502,8 +530,9 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 }
 
 .card-price {
-  font-size: 17px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text);
   margin-bottom: 2px;
@@ -691,6 +720,73 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   outline-offset: 2px;
 }
 
+/* Gallery nav (prev/next arrows + counter). These sit on top of gallery-main,
+   which is why .gallery-frame - not .gallery-main itself - is the positioning
+   context; an <img> can't contain child elements. */
+.gallery-frame {
+  position: relative;
+}
+
+.gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  opacity: 0.9;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.gallery-nav svg {
+  width: 16px;
+  height: 16px;
+}
+
+.gallery-nav:hover {
+  opacity: 1;
+}
+
+.gallery-nav:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.gallery-nav:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.gallery-nav-prev { left: 10px; }
+.gallery-nav-next { right: 10px; }
+
+.gallery-counter {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 999px;
+}
+
+@media (max-width: 1023px) {
+  .gallery-nav {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 /* Modal Details */
 .modal-details {
   display: flex;
@@ -699,14 +795,15 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 
 @media (max-width: 1023px) {
   .modal-details {
-    padding: 0 20px 120px 20px;
+    padding: 20px 20px calc(120px + env(safe-area-inset-bottom, 0px)) 20px;
   }
 }
 
 .modal-title {
-  font-size: 25px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: clamp(23px, 5vw, 27px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text);
   margin-bottom: 12px;
   line-height: 1.2;
@@ -831,6 +928,17 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   border-color: var(--primary);
 }
 
+@media (max-width: 639px) {
+  .qty-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .qty-input {
+    height: 44px;
+  }
+}
+
 /* Price Display */
 .price-display {
   margin-top: 24px;
@@ -852,8 +960,9 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   margin-bottom: 0;
 }
 
-.price-total {
-  font-size: 20px;
+.price-row-total {
+  font-family: var(--font-display);
+  font-size: 21px;
   font-weight: 700;
   color: var(--primary);
   margin-top: 8px;
@@ -872,6 +981,10 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   color: var(--success);
   font-weight: 600;
   text-align: center;
+}
+
+.savings-note::before {
+  content: "✓ ";
 }
 
 /* Incentive Display */
@@ -898,8 +1011,9 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   color: var(--surface);
   border: none;
   border-radius: 12px;
+  font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   text-decoration: none;
   line-height: 56px;
@@ -928,7 +1042,7 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
     left: 0;
     right: 0;
     margin: 0;
-    padding: 16px;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
     height: auto;
     line-height: 1.4;
     background: var(--success);
@@ -995,7 +1109,7 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 }
 
 /*price readout*/
-.price-total,
+.price-row-total,
 .discount-amount {
   animation: value-shift 260ms ease-out;
 }
@@ -1044,3 +1158,312 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* Notify Banner */
+.notify-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, var(--primary-tint), var(--surface));
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.notify-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.notify-banner-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+}
+
+.notify-banner-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.notify-banner-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.notify-banner-btn {
+  flex-shrink: 0;
+  height: 42px;
+  padding: 0 20px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: filter 150ms ease, transform 150ms ease;
+}
+
+.notify-banner-btn:hover {
+  filter: brightness(105%);
+}
+
+.notify-banner-btn:active {
+  transform: scale(0.97);
+}
+
+.notify-banner-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .notify-banner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .notify-banner-text {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .notify-banner-btn {
+    width: 100%;
+  }
+}
+
+/* Notify Modal - a small opt-in form, so it borrows the shared .modal-overlay/.modal
+   frame but overrides the size down from the product modal's gallery-sized layout. */
+.notify-modal {
+  max-width: 440px;
+}
+
+.notify-modal-content {
+  padding: 32px;
+}
+
+.notify-modal-title {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 8px;
+  margin-right: 32px;
+  line-height: 1.25;
+}
+
+.notify-modal-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.notify-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.notify-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  font-size: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.notify-input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-color: var(--primary);
+}
+
+.notify-input[aria-invalid="true"] {
+  border-color: #E8544F;
+}
+
+.notify-error {
+  min-height: 18px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #E8544F;
+}
+
+.notify-submit-btn {
+  display: block;
+  width: 100%;
+  height: 52px;
+  margin-top: 16px;
+  background: var(--success);
+  color: var(--surface);
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 150ms ease, transform 150ms ease;
+}
+
+.notify-submit-btn:hover {
+  filter: brightness(90%);
+}
+
+.notify-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.notify-submit-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.notify-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.notify-success {
+  padding: 20px 4px 4px;
+  text-align: center;
+  animation: fade-rise 260ms ease-out;
+}
+
+.notify-success-badge {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 14px;
+}
+
+.notify-checkmark {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--success);
+  border-radius: 50%;
+  animation: notify-checkmark-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.notify-success-text {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Fireworks burst - a dozen little particles fly out from the checkmark and fade,
+   playing once when the success state appears. Positions and colors are hand-set
+   per particle, matching how .balloons and .shapes are authored elsewhere in this
+   file, rather than computed - it's a one-shot decoration, not a system. */
+.notify-fireworks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.notify-fireworks i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: firework-burst 700ms ease-out forwards;
+}
+
+.notify-fireworks i:nth-child(1)  { background: #E8544F; animation-delay: 60ms;  --tx: 48px;  --ty: -4px; }
+.notify-fireworks i:nth-child(2)  { background: #F2A73B; animation-delay: 90ms;  --tx: 36px;  --ty: -36px; }
+.notify-fireworks i:nth-child(3)  { background: #3FA9F5; animation-delay: 40ms;  --tx: 6px;   --ty: -48px; }
+.notify-fireworks i:nth-child(4)  { background: #55C57A; animation-delay: 110ms; --tx: -28px; --ty: -40px; }
+.notify-fireworks i:nth-child(5)  { background: #A770EF; animation-delay: 70ms;  --tx: -48px; --ty: -6px; }
+.notify-fireworks i:nth-child(6)  { background: #E2C530; animation-delay: 100ms; --tx: -38px; --ty: 32px; }
+.notify-fireworks i:nth-child(7)  { background: #4FC3C1; animation-delay: 50ms;  --tx: -4px;  --ty: 48px; }
+.notify-fireworks i:nth-child(8)  { background: #E8544F; animation-delay: 130ms; --tx: 30px;  --ty: 38px; }
+.notify-fireworks i:nth-child(9)  { background: #3FA9F5; animation-delay: 80ms;  --tx: 46px;  --ty: 16px; }
+.notify-fireworks i:nth-child(10) { background: #F2A73B; animation-delay: 20ms;  --tx: -18px; --ty: -46px; }
+
+@keyframes firework-burst {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  65%  { opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0.3); opacity: 0; }
+}
+
+@keyframes notify-checkmark-pop {
+  0%   { opacity: 0; transform: scale(0.4); }
+  60%  { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* A bouncier entrance than the product modal's - this one is a single small form,
+   so it can afford a bit more personality without feeling heavy. Overrides the
+   shared .modal pop-in/fade-in (including its mobile variant) by coming later in
+   the cascade at equal specificity. */
+@keyframes notify-pop-in {
+  0%   { opacity: 0; transform: scale(0.85) translateY(10px); }
+  60%  { opacity: 1; transform: scale(1.03) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.notify-modal {
+  animation: notify-pop-in 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* On mobile, the generic .modal rules turn into a full-screen sheet - right for the
+   image-heavy product modal, but heavy for a one-field form. Override back to a
+   compact centered card here instead. */
+@media (max-width: 1023px) {
+  .notify-overlay {
+    padding: 20px;
+  }
+
+  .notify-modal {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    border-radius: 16px;
+    animation: notify-pop-in 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .notify-modal-content {
+    padding: 28px 24px;
+  }
+}

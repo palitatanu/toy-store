@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deep-Ash Collecitons - Bulk Toys for Parties &amp; Events</title>
+    <title>Deep-Ash Collections - Bulk Toys for Parties &amp; Events</title>
     <meta name="description" content="Quality toys with bulk discounts. Perfect for birthday parties, school events, and celebrations.">
+    <meta name="theme-color" id="meta-theme-color" content="#1C1F24">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/styles.css">
     <script>
         (function () {
@@ -32,7 +36,12 @@
     <header class="site-header">
         <div class="header-inner">
             <div class="header-brand">
-                <h1 class="site-title" id="site-title">Deep-Ash Collections</h1>
+                <h1 class="site-title">
+                    <svg class="site-mark" viewBox="0 0 24 30" aria-hidden="true" focusable="false">
+                        <path d="M12 1C6.2 1 2 5.7 2 11.2c0 5.6 4.4 10.3 8.7 12.9.4.2.6.6.6 1v1.2c0 .6.3 1 .7 1s.7-.4.7-1v-1.2c0-.4.2-.8.6-1C17.6 21.5 22 16.8 22 11.2 22 5.7 17.8 1 12 1z"/>
+                    </svg>
+                    <span id="site-title">Deep-Ash Collections</span>
+                </h1>
                 <p class="site-subtitle" id="site-subtitle"></p>
             </div>
             <button type="button" class="theme-toggle" id="theme-toggle">Light mode</button>
@@ -40,11 +49,47 @@
     </header>
 
     <main class="container">
+        <section class="notify-banner">
+            <div class="notify-banner-text">
+                <span class="notify-banner-icon" aria-hidden="true">🔔</span>
+                <div>
+                    <p class="notify-banner-title">Never miss a new arrival</p>
+                    <p class="notify-banner-sub">Get a WhatsApp ping when we add new toys</p>
+                </div>
+            </div>
+            <button type="button" id="notify-open-btn" class="notify-banner-btn">Notify Me</button>
+        </section>
+
         <section id="product-grid" class="product-grid" aria-label="Product catalog"></section>
     </main>
 
     <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div id="product-modal" class="modal"></div>
+    </div>
+
+    <div id="notify-overlay" class="modal-overlay notify-overlay" role="dialog" aria-modal="true" aria-labelledby="notify-title">
+        <div id="notify-modal" class="modal notify-modal">
+            <button type="button" id="notify-close" class="modal-close" aria-label="Close">&times;</button>
+            <div class="notify-modal-content">
+                <h2 id="notify-title" class="notify-modal-title">Get notified about new products</h2>
+                <p class="notify-modal-sub">Drop your WhatsApp number and we'll message you the moment something new lands.</p>
+                <form id="notify-form" novalidate>
+                    <label for="notify-phone" class="notify-label">WhatsApp number</label>
+                    <input type="tel" id="notify-phone" class="notify-input" placeholder="e.g. 98765 43210" autocomplete="tel" inputmode="tel" required>
+                    <p id="notify-error" class="notify-error" role="alert"></p>
+                    <button type="submit" class="notify-submit-btn">Notify Me <span aria-hidden="true">💬</span></button>
+                </form>
+                <div id="notify-success" class="notify-success" role="status" hidden>
+                    <div class="notify-success-badge">
+                        <span class="notify-checkmark">✓</span>
+                        <span class="notify-fireworks" aria-hidden="true">
+                            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                        </span>
+                    </div>
+                    <p class="notify-success-text">Thanks! We'll let you know here when something new lands.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="assets/js/config.js"></script>

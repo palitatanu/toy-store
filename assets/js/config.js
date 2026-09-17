@@ -15,6 +15,11 @@ var CONFIG = {
     // Welcome message prefix for WhatsApp leads
     greeting: 'Hello! I would like to order:',
 
+    // Google Apps Script Web App URL that appends "Notify Me" signups to a Google
+    // Sheet. Leave blank until you've deployed the script (see the setup steps) -
+    // the notify form will show a friendly error instead of failing silently.
+    sheetWebhookUrl: 'https://script.google.com/macros/s/AKfycbykknpps4mZNdUt-9xxmk5tKwCgYYh-WFzbjfaJ8gWFGUmVHk3ftkOXoPjsSPA_EaHo_A/exec',
+
     // Site metadata
     siteTitle: 'Deep-Ash Collections - Bulk Toys for Parties & Events',
     siteDescription: 'Quality toys with bulk discounts. Perfect for birthday parties, school events, and celebrations.',

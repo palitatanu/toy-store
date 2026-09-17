@@ -5,6 +5,7 @@ var currentProduct = null;
 var currentQuantity = 0;
 var focusTrapElements = [];
 var lastFocusedElement = null;
+var notifyModalOpen = false;
 
 // Escapes quotes too: these values are interpolated into HTML attributes, not just text
 function escapeHtml(text) {
@@ -264,6 +265,13 @@ function applyTheme(theme) {
         // Private browsing can block storage; the theme still applies for this visit.
     }
 
+    // Keep the browser's own chrome (Android address bar, iOS status bar strip)
+    // matching the page instead of staying stuck on the light-mode default.
+    var themeColorMeta = document.getElementById('meta-theme-color');
+    if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', theme === 'light' ? '#FFFFFF' : '#1C1F24');
+    }
+
     var btn = document.getElementById('theme-toggle');
     if (!btn) return;
     var next = theme === 'light' ? 'dark' : 'light';
@@ -374,7 +382,7 @@ function openModal(product) {
     }, 100);
 
     // Setup focus trap
-    setupFocusTrap();
+    setupFocusTrap(modal);
 }
 
 // Close modal
@@ -399,7 +407,127 @@ function closeModal() {
     }
 }
 
-// Render modal content
+// Open the "notify me about new products" modal
+function openNotifyModal() {
+    notifyModalOpen = true;
+    lastFocusedElement = document.activeElement;
+
+    var overlay = document.getElementById('notify-overlay');
+    var modal = document.getElementById('notify-modal');
+
+    overlay.style.display = 'flex';
+
+    document.querySelector('.site-header').setAttribute('aria-hidden', 'true');
+    document.getElementById('product-grid').setAttribute('aria-hidden', 'true');
+
+    var phoneInput = document.getElementById('notify-phone');
+    setTimeout(function() {
+        phoneInput.focus();
+    }, 100);
+
+    setupFocusTrap(modal);
+}
+
+// Close the notify modal and reset it for next time
+function closeNotifyModal() {
+    var overlay = document.getElementById('notify-overlay');
+    var form = document.getElementById('notify-form');
+    var success = document.getElementById('notify-success');
+    var error = document.getElementById('notify-error');
+    var submitBtn = form.querySelector('.notify-submit-btn');
+
+    document.querySelector('.site-header').removeAttribute('aria-hidden');
+    document.getElementById('product-grid').removeAttribute('aria-hidden');
+
+    overlay.style.display = 'none';
+    form.reset();
+    form.hidden = false;
+    success.hidden = true;
+    error.textContent = '';
+    document.getElementById('notify-phone').removeAttribute('aria-invalid');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'Notify Me <span aria-hidden="true">💬</span>';
+
+    notifyModalOpen = false;
+    focusTrapElements = [];
+
+    if (lastFocusedElement) {
+        lastFocusedElement.focus();
+        lastFocusedElement = null;
+    }
+}
+
+// Handle notify form submit: validate the number, then send it to the Google Sheet
+// webhook (see config.js). GitHub Pages can't run a backend itself, so a small
+// Apps Script Web App bound to a Sheet is what actually stores the signup.
+//
+// The save happens in the background rather than being waited on: with
+// mode: 'no-cors' the response is opaque anyway (see the fetch call below), so
+// waiting on it before showing "Thanks!" would only add a delay without adding
+// any real certainty. The one case this trades away is a genuine network failure -
+// there is no error shown for that; the row will simply be missing from the Sheet.
+function handleNotifySubmit(e) {
+    e.preventDefault();
+
+    var input = document.getElementById('notify-phone');
+    var error = document.getElementById('notify-error');
+    var form = document.getElementById('notify-form');
+    var digits = input.value.replace(/\D/g, '');
+
+    if (digits.length < 10 || digits.length > 15) {
+        error.textContent = 'Please enter a valid WhatsApp number.';
+        input.setAttribute('aria-invalid', 'true');
+        input.focus();
+        return;
+    }
+
+    error.textContent = '';
+    input.removeAttribute('aria-invalid');
+
+    if (!CONFIG.sheetWebhookUrl) {
+        error.textContent = 'Sign-ups aren\'t set up yet - please check back soon.';
+        return;
+    }
+
+    if (window.fetch) {
+        fetch(CONFIG.sheetWebhookUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ phone: digits, submittedAt: new Date().toISOString() })
+        }).catch(function () {
+            // Best-effort: nothing meaningful to show the visitor at this point,
+            // since the "Thanks!" confirmation is already on screen.
+        });
+    }
+
+    form.hidden = true;
+    document.getElementById('notify-success').hidden = false;
+    setTimeout(closeNotifyModal, 2400);
+}
+
+// Wire up the notify button, modal close controls and form submit. Called once
+// from init(), unlike the product modal's handlers which are rebound on every open
+// because that modal's HTML is rebuilt each time.
+function setupNotifyModal() {
+    var openBtn = document.getElementById('notify-open-btn');
+    var closeBtn = document.getElementById('notify-close');
+    var overlay = document.getElementById('notify-overlay');
+    var form = document.getElementById('notify-form');
+
+    if (!openBtn) return;
+
+    openBtn.addEventListener('click', openNotifyModal);
+    closeBtn.addEventListener('click', closeNotifyModal);
+    form.addEventListener('submit', handleNotifySubmit);
+
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            closeNotifyModal();
+        }
+    });
+}
+
+
 function renderModalContent() {
     if (!currentProduct) return;
 
@@ -432,11 +560,24 @@ function renderModalContent() {
 
     var thumbsHtml = images.length > 1 ? '<div class="gallery-thumbs">' + thumbnails + '</div>' : '';
 
+    var navHtml = images.length > 1 ?
+        '<button type="button" class="gallery-nav gallery-nav-prev" aria-label="Previous image">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<button type="button" class="gallery-nav gallery-nav-next" aria-label="Next image">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<div class="gallery-counter" aria-hidden="true"><span id="gallery-counter-current">1</span> / ' + images.length + '</div>'
+        : '';
+
     modal.innerHTML =
         '<button id="modal-close" class="modal-close" aria-label="Close product details">&times;</button>' +
         '<div class="modal-layout">' +
         '<div class="modal-gallery">' +
+        '<div class="gallery-frame">' +
         '<img id="gallery-main" src="' + escapeHtml(images[0]) + '" alt="' + escapeHtml(currentProduct.name) + '" class="gallery-main">' +
+        navHtml +
+        '</div>' +
         thumbsHtml +
         '</div>' +
         '<div class="modal-details">' +
@@ -546,10 +687,10 @@ function updateWhatsAppLink() {
     btn.href = url;
 }
 
-// Setup focus trap
-function setupFocusTrap() {
-    var modal = document.getElementById('product-modal');
-    focusTrapElements = modal.querySelectorAll(
+// Setup focus trap. Shared by the product modal and the notify modal - whichever
+// element is passed in is the one Tab gets trapped inside.
+function setupFocusTrap(modalEl) {
+    focusTrapElements = modalEl.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
 }
@@ -606,21 +747,43 @@ function attachModalHandlers() {
         updatePriceDisplay();
     });
 
+    var images = getProductImages(currentProduct);
+    var mainImage = document.getElementById('gallery-main');
+    var counter = document.getElementById('gallery-counter-current');
+    var activeIndex = 0;
+
+    // Single source of truth for "which image is showing" - used by thumbnail
+    // taps, the prev/next buttons, and the swipe gesture below, so all three stay
+    // in sync instead of duplicating the same DOM updates three times.
+    function setActiveImage(index) {
+        // Wrap around both ends so prev/next (and swiping) never dead-end.
+        var wrapped = (index + images.length) % images.length;
+        activeIndex = wrapped;
+
+        mainImage.src = images[wrapped];
+        mainImage.alt = currentProduct.name + ' - view ' + (wrapped + 1) + ' of ' + images.length;
+
+        thumbs.forEach(function(t) {
+            t.classList.remove('active');
+            t.removeAttribute('aria-current');
+        });
+        if (thumbs[wrapped]) {
+            thumbs[wrapped].classList.add('active');
+            thumbs[wrapped].setAttribute('aria-current', 'true');
+            // Bring the active thumbnail into view if the strip has scrolled past it -
+            // otherwise swiping or using the prev/next buttons can silently move the
+            // selection off-screen in the thumbnail row.
+            thumbs[wrapped].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
+        if (counter) {
+            counter.textContent = wrapped + 1;
+        }
+    }
+
     thumbs.forEach(function(thumb) {
         thumb.addEventListener('click', function() {
-            var index = parseInt(thumb.getAttribute('data-image-index'), 10);
-            var images = getProductImages(currentProduct);
-            var mainImage = document.getElementById('gallery-main');
-            mainImage.src = images[index];
-            mainImage.alt = currentProduct.name + ' - view ' + (index + 1) + ' of ' + images.length;
-
-            // Update active state
-            document.querySelectorAll('.gallery-thumb').forEach(function(t) {
-                t.classList.remove('active');
-                t.removeAttribute('aria-current');
-            });
-            thumb.classList.add('active');
-            thumb.setAttribute('aria-current', 'true');
+            setActiveImage(parseInt(thumb.getAttribute('data-image-index'), 10));
         });
 
         thumb.addEventListener('keydown', function(e) {
@@ -635,6 +798,39 @@ function attachModalHandlers() {
     if (thumbs.length > 0) {
         thumbs[0].classList.add('active');
         thumbs[0].setAttribute('aria-current', 'true');
+    }
+
+    if (images.length > 1 && mainImage) {
+        var prevBtn = document.querySelector('.gallery-nav-prev');
+        var nextBtn = document.querySelector('.gallery-nav-next');
+
+        if (prevBtn) prevBtn.addEventListener('click', function() { setActiveImage(activeIndex - 1); });
+        if (nextBtn) nextBtn.addEventListener('click', function() { setActiveImage(activeIndex + 1); });
+
+        // Swipe the main photo left/right to move between images. Both listeners
+        // are passive (no preventDefault) and the gesture is only interpreted on
+        // touchend, so this never competes with or blocks the page's native
+        // scrolling - it just additionally reads the gesture.
+        var touchStartX = 0;
+        var touchStartY = 0;
+
+        mainImage.addEventListener('touchstart', function(e) {
+            if (e.touches.length !== 1) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        mainImage.addEventListener('touchend', function(e) {
+            if (!e.changedTouches || e.changedTouches.length !== 1) return;
+            var dx = e.changedTouches[0].clientX - touchStartX;
+            var dy = e.changedTouches[0].clientY - touchStartY;
+
+            // Require a deliberate, mostly-horizontal drag so an ordinary vertical
+            // scroll or a tap-to-zoom attempt doesn't get mistaken for a swipe.
+            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                setActiveImage(dx < 0 ? activeIndex + 1 : activeIndex - 1);
+            }
+        }, { passive: true });
     }
 }
 
@@ -656,6 +852,7 @@ function init() {
 
     setupThemeToggle();
     renderProducts();
+    setupNotifyModal();
 
     // Grid click delegation
     var grid = document.getElementById('product-grid');
@@ -687,11 +884,15 @@ function init() {
 
     // Escape key to close
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && currentProduct) {
-            closeModal();
+        if (e.key === 'Escape') {
+            if (currentProduct) {
+                closeModal();
+            } else if (notifyModalOpen) {
+                closeNotifyModal();
+            }
         }
 
-        if (e.key === 'Tab' && currentProduct) {
+        if (e.key === 'Tab' && (currentProduct || notifyModalOpen)) {
             handleFocusTrap(e);
         }
     });
