@@ -233,7 +233,10 @@ body {
 /* Header content aligns to the same grid as the catalogue below it */
 .header-brand {
   min-width: 0;
-  padding: 0 100px;
+  /* Reserves the same width on the empty left side as .header-actions occupies
+     on the right (two 36px circular buttons + gap + edge offset), so the title
+     still optically centers instead of skewing toward the empty side. */
+  padding: 0 96px;
 }
 
 @media (max-width: 639px) {
@@ -247,32 +250,36 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 8px;
-  /* Brand is centred in the header; the toggle is taken out of flow and pinned
-     right so it cannot push the title off-centre however long the name is. */
+  /* Brand is centred in the header; the actions cluster is taken out of flow and
+     pinned right so it cannot push the title off-centre however long the name is. */
   text-align: center;
 }
 
-.theme-toggle {
+.header-actions {
   position: absolute;
   top: 50%;
   right: 8px;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (max-width: 639px) {
   .header-inner {
-    padding-right:96px;
+    padding-right: 96px;
     text-align: left;
   }
 }
 
 .theme-toggle {
   flex-shrink: 0;
-  min-height: 36px;
-  padding: 0 14px;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -281,13 +288,88 @@ body {
   transition: border-color 150ms ease, background 150ms ease;
 }
 
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .theme-toggle:hover {
   border-color: var(--primary);
 }
 
-.theme-toggle:focus {
+.theme-toggle:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* Cart button + badge */
+.cart-btn {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.cart-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cart-btn:hover {
+  border-color: var(--primary);
+}
+
+/* Once the cart has anything in it, the button itself becomes the "go check
+   out" cue - filled instead of a plain outline - rather than staying visually
+   identical whether the cart is empty or not. */
+.cart-btn.has-items {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.cart-btn.has-items:hover {
+  filter: brightness(92%);
+}
+
+.cart-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+
+/* display: flex above is an author rule, which always wins over the browser's
+   own [hidden] { display: none }, regardless of specificity - without this,
+   setting badge.hidden = true in JS silently does nothing and the last count
+   stays on screen even after the cart is cleared. */
+.cart-badge[hidden] {
+  display: none;
 }
 
 .site-title {
@@ -662,6 +744,13 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 /* Gallery */
 .modal-gallery {
   position: relative;
+  /* Grid items default to min-width: auto, meaning they won't shrink below
+     their content's natural width - here that content is .gallery-thumbs,
+     a non-wrapping flex row meant to scroll internally via overflow-x: auto.
+     Without this override, the grid track (and on mobile, the whole modal)
+     stretches to fit every thumbnail instead of letting the strip scroll,
+     which is what was pushing the gallery wider than the phone screen. */
+  min-width: 0;
 }
 
 @media (max-width: 1023px) {
@@ -785,7 +874,7 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 .gallery-counter {
   position: absolute;
   bottom: 10px;
-  right: 10px;
+  left: 10px;
   padding: 3px 10px;
   font-size: 12px;
   font-weight: 600;
@@ -834,74 +923,28 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   font-size: 15px;
   color: var(--text);
   line-height: 1.6;
-  margin-bottom: 16px;
+  margin-bottom: 5px;
 }
 
 .modal-age {
   font-size: 14px;
   color: var(--text-muted);
-  margin-bottom: 16px;
-}
-
-/* Discount Panel */
-.discount-panel {
-  margin-top: 16px;
-  padding: 16px;
-  background: var(--surface-alt);
-  border: 1px solid var(--hairline);
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 16px;
-}
-
-.discount-panel-title {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text);
-}
-
-.discount-panel div {
-  line-height: 1.6;
-  color: var(--text-muted);
-}
-
-.discount-panel-title ~ div {
-  color: var(--text-muted);
-}
-
-/* Quantity Section */
-.quantity-section {
-  margin-top: 24px;
-}
-
-.quantity-label {
-  display: block;
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text);
-}
-
-.quantity-note {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 12px;
 }
 
 .quantity-stepper {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .qty-btn {
-  width: 44px;
-  height: 44px;
+  width: 20px;
+  height: 20px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
-  font-size: 20px;
+  font-size: 17px;
   cursor: pointer;
   transition: border-color 150ms ease;
   display: flex;
@@ -925,10 +968,10 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 }
 
 .qty-input {
-  width: 80px;
-  height: 40px;
+  width: 25px;
+  height: 25px;
   text-align: center;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -942,6 +985,19 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   border-color: var(--primary);
 }
 
+/* Chrome, Safari, Edge, Opera */
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.qty-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+
 @media (max-width: 639px) {
   .qty-btn {
     width: 48px;
@@ -953,8 +1009,36 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   }
 }
 
-/* Price Display */
+/* Merged price line: unit price x quantity stepper = (struck-through
+   pre-discount total, when applicable) final total (discount tag). Replaces
+   the old separate quantity section and the 4-row price breakdown below it. */
 .price-display {
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+   gap: 8px; /* Space between badge and price row */
+   flex-wrap: wrap;
+   margin-top: 12px;
+   padding: 8px;
+   background: var(--surface-alt);
+   border: 1px solid var(--hairline);
+   border-radius: 8px;
+ }
+
+ /* The horizontal row for all price-related elements */
+ .price-content-row {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 10px; /* Space between unit, stepper, and total */
+   width: 100%;
+ }
+
+.price-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 24px;
   padding: 16px;
   background: var(--surface-alt);
@@ -962,61 +1046,201 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   border-radius: 8px;
 }
 
-.price-row {
+.price-unit {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.price-times,
+.price-equals {
+  font-size: 15px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.price-result {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 8px;
-  font-size: 16px;
+  flex-wrap: wrap;
+  gap: 6px;
+  /* Pushes the result to the row's right edge when there's room; when the row
+     wraps on narrow screens this just becomes the start of its own line. */
+  margin-left: auto;
 }
 
-.price-row:last-of-type {
-  margin-bottom: 0;
+.price-strike {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-decoration: line-through;
 }
 
-.price-row-total {
+.price-final {
   font-family: var(--font-display);
   font-size: 21px;
   font-weight: 700;
   color: var(--primary);
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
 }
 
-.discount-amount {
+.price-discount-tag {
+  padding: 2px 7px;
+  background: var(--success);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* "Save up to X%" badge, overlaid on the product photo - a static summary of
+   the best available discount, replacing the incentive banner that used to
+   compute this dynamically against the current quantity.*/
+.save-up-to-badge {
+  top: 0;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 3. Configure the tooltip (::after) for multiline, width, and zeroed spacing */
+.save-up-to-badge::after {
+  /* Enable multiline and respect manual line breaks (\n) */
+  white-space: pre !important;
+  display: inline-block !important;
+
+  /* Increase width and remove restrictions */
+  width: auto !important;
+  /* Optional: visual cleanup for the multiline layout */
+ /* Adjust as needed, but keep right at 0 if required */
+  text-align: left !important;
+  overflow: visible !important;
+}
+
+/* Two buttons in the product modal now: Add to Cart (stays in-page, builds a
+   multi-item order) and Order via WhatsApp (instant single-item order). Both
+   are icon-only and sit side by side on every screen size - their full names
+   are available as tooltips (see the [data-tooltip] rules below) and as
+   aria-labels for anyone not hovering a mouse over them. */
+.modal-cta-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.add-to-cart-btn,
+.modal-cta-group .whatsapp-btn {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  font-size: 22px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: filter 150ms ease, transform 150ms ease, background 150ms ease;
+}
+
+.add-to-cart-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+}
+
+.add-to-cart-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.modal-cta-group .whatsapp-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (max-width: 1023px) {
+  .modal-cta-group .add-to-cart-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .modal-cta-group .whatsapp-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Inline icon next to text, used on the cart's "Checkout via WhatsApp" button
+   where (unlike the modal's icon-only version) the label stays visible. */
+.btn-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: -4px;
+  margin-left: 2px;
+}
+
+.add-to-cart-btn:hover {
+  filter: brightness(105%);
+}
+
+.add-to-cart-btn:active {
+  transform: scale(0.96);
+}
+
+.add-to-cart-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.add-to-cart-btn:disabled {
+  cursor: default;
+}
+
+/* Highlighted state once this product has a quantity in the cart - set on
+   modal open, and again right after Add to Cart's checkmark confirmation
+   finishes, so it reflects a click made in this same dialog session too. */
+.add-to-cart-btn.in-cart {
+  background: var(--success);
+}
+
+/* Count badge overlaid on the button corner, showing the cart quantity for
+   this product. Same [hidden]-override trap as .cart-badge in the header -
+   declaring display: flex above means it has to be restored explicitly. */
+.cta-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--success);
-  font-weight: 600;
+  background: #fff;
+  border-radius: 999px;
+  border: 2px solid var(--success);
 }
 
-.savings-note {
-  margin-top: 12px;
-  font-size: 14px;
-  color: var(--success);
-  font-weight: 600;
-  text-align: center;
+.cta-badge[hidden] {
+  display: none;
 }
 
-.savings-note::before {
-  content: "✓ ";
-}
-
-/* Incentive Display */
-.incentive-display {
-  margin-top: 12px;
-}
-
-.incentive-note {
-  padding: 12px;
-  background: var(--primary-tint);
-  border-left: 2px solid var(--primary);
-  border-radius: 4px;
-  font-size: 14px;
-  color: var(--text);
-  font-weight: 500;
-}
-
-/* WhatsApp CTA */
+/* WhatsApp CTA - the full-text block-button look below is the default, used
+   standalone for the cart's "Checkout via WhatsApp" button. Inside the product
+   modal it's overridden by .modal-cta-group .whatsapp-btn above into a compact
+   icon to match Add to Cart. */
 .whatsapp-btn {
   display: block;
   width: 100%;
@@ -1036,6 +1260,14 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   margin-top: 32px;
 }
 
+.modal-cta-group .whatsapp-btn,
+.cart-footer .whatsapp-btn {
+  /* Both contexts already provide their own top spacing (the group's margin +
+     gap, or the total row's margin-bottom), so the button's own default would
+     double up here. */
+  margin-top: 0;
+}
+
 .whatsapp-btn:hover {
   filter: brightness(90%);
 }
@@ -1047,6 +1279,59 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 .whatsapp-btn:focus {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* Generic tooltip utility - used by the two CTA icon buttons above and by the
+   quantity stepper's + button (bulk-pricing tiers). Shows on hover/keyboard
+   focus; app.js also toggles .tooltip-visible briefly on tap for the +
+   button specifically, since touch devices have no :hover to trigger this. */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  text-align: center;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fff;
+  background: rgba(20, 20, 20, 0.92);
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 30;
+}
+
+[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  border: 5px solid transparent;
+  border-top-color: rgba(20, 20, 20, 0.92);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 30;
+}
+
+[data-tooltip]:hover::after,
+[data-tooltip]:hover::before,
+[data-tooltip]:focus-visible::after,
+[data-tooltip]:focus-visible::before,
+[data-tooltip].tooltip-visible::after,
+[data-tooltip].tooltip-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 @media (max-width: 1023px) {
@@ -1063,6 +1348,34 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
     box-shadow: var(--bar-shadow);
     z-index: 103;
     border-radius: 0;
+  }
+
+  /* Inside the product modal, Add to Cart and Order via WhatsApp share one
+     sticky bar side by side instead of each claiming the full-width bar on
+     its own - this rule's higher specificity (two classes) wins over the
+     plain .whatsapp-btn rule just above regardless of source order. */
+  .modal-cta-group {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) 16px;
+    background: var(--surface);
+    box-shadow: var(--bar-shadow);
+    z-index: 103;
+  }
+
+  .modal-cta-group .add-to-cart-btn,
+  .modal-cta-group .whatsapp-btn {
+    /* relative, not static: this keeps each button its own positioning
+       context so its tooltip centers over itself rather than over the
+       whole fixed bar. */
+    position: relative;
+    height: 52px;
+    font-size: 20px;
+    box-shadow: none;
+    border-radius: 10px;
   }
 }
 
@@ -1129,7 +1442,7 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 }
 
 .savings-note,
-.incentive-note {
+.save-up-to-badge {
   animation: fade-rise 260ms ease-out;
 }
 
@@ -1480,4 +1793,210 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   .notify-modal-content {
     padding: 28px 24px;
   }
+}
+
+/* Cart Modal ------------------------------------------------------------
+   Unlike the notify modal, this one is left with the default full-screen
+   sheet behavior on mobile (no compact-card override) - a cart list needs
+   real scroll room, which the notify form's single field never did. */
+.cart-modal {
+  max-width: 560px;
+}
+
+.cart-modal-content {
+  padding: 32px;
+}
+
+@media (max-width: 1023px) {
+  .cart-modal-content {
+    /* Same reasoning as .modal-details: reserve room for the checkout button's
+       sticky bar (via the shared .whatsapp-btn mobile rule) so the last cart
+       item is never hidden behind it. */
+    padding: 20px 20px calc(120px + env(safe-area-inset-bottom, 0px)) 20px;
+  }
+}
+
+.cart-modal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  margin-right: 32px;
+}
+
+.cart-modal-title {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.cart-clear-btn {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+.cart-clear-btn:hover {
+  color: var(--primary);
+}
+
+.cart-clear-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.cart-empty {
+  padding: 44px 8px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.cart-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.cart-item-image {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--surface-muted);
+}
+
+.cart-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.cart-item-unit {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.cart-item-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cart-qty-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.cart-qty-btn:hover {
+  border-color: var(--primary);
+}
+
+.cart-qty-btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.cart-qty-value {
+  min-width: 18px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cart-item-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.cart-item-price {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.cart-item-remove {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.cart-item-remove:hover {
+  color: #E8544F;
+  background: var(--surface-muted);
+}
+
+.cart-item-remove:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.cart-footer {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+}
+
+.cart-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
 }

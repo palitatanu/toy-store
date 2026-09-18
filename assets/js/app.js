@@ -6,6 +6,9 @@ var currentQuantity = 0;
 var focusTrapElements = [];
 var lastFocusedElement = null;
 var notifyModalOpen = false;
+var cartModalOpen = false;
+var cart = []; // [{ productId, quantity }] - populated from localStorage in init()
+var CART_KEY = 'toystore-cart';
 
 // Escapes quotes too: these values are interpolated into HTML attributes, not just text
 function escapeHtml(text) {
@@ -66,7 +69,7 @@ function calculatePricing(product, qty) {
     };
 }
 
-// Find next discount tier for incentive display
+// Find next discount tier - used by the + button's tooltip
 function getNextTier(product, currentQty) {
     var tiers = getDiscountTiers(product);
     var sortedTiers = tiers.slice().sort(function(a, b) {
@@ -320,10 +323,333 @@ function setupCardSwipe(card, product) {
     }, { passive: true });
 }
 
+// --- Cart -------------------------------------------------------------
+// A cart entry is { productId, quantity }. Cart persists to localStorage so it
+// survives a reload or the visitor closing and reopening the site, the same way
+// the theme choice does.
+
+function findProductById(id) {
+    for (var i = 0; i < PRODUCTS.length; i++) {
+        if (PRODUCTS[i].id === id) return PRODUCTS[i];
+    }
+    return null;
+}
+
+function saveCart() {
+    try {
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch (e) {
+        // Private browsing or storage full - the cart still works for this visit,
+        // it just won't survive a reload.
+    }
+}
+
+function loadCart() {
+    try {
+        var raw = localStorage.getItem(CART_KEY);
+        if (!raw) return [];
+        var parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+
+        // Drop anything that no longer matches a real product (the catalog may
+        // have changed since this was saved) and re-clamp quantities in case a
+        // product's min/max/step changed too.
+        var cleaned = [];
+        parsed.forEach(function (item) {
+            if (!item || typeof item.productId !== 'string') return;
+            var product = findProductById(item.productId);
+            if (!product || !(item.quantity > 0)) return;
+            cleaned.push({ productId: item.productId, quantity: normalizeQuantity(product, item.quantity) });
+        });
+        return cleaned;
+    } catch (e) {
+        return [];
+    }
+}
+
+function getCartCount() {
+    return cart.reduce(function (sum, item) { return sum + item.quantity; }, 0);
+}
+
+function addToCart(product, qty) {
+    var item = cart.filter(function (i) { return i.productId === product.id; })[0];
+    if (item) {
+        item.quantity = normalizeQuantity(product, item.quantity + qty);
+    } else {
+        cart.push({ productId: product.id, quantity: normalizeQuantity(product, qty) });
+    }
+    saveCart();
+    renderCartBadge();
+    renderCartModal();
+}
+
+function removeFromCart(productId) {
+    cart = cart.filter(function (i) { return i.productId !== productId; });
+    saveCart();
+    renderCartBadge();
+    renderCartModal();
+}
+
+// direction is +1 or -1, moving by the product's own step. Stepping below the
+// product's minimum removes the line entirely, mirroring how a physical cart
+// works - there's no such thing as "0.5 of an item" sitting in it.
+function changeCartQuantity(product, direction) {
+    var item = cart.filter(function (i) { return i.productId === product.id; })[0];
+    if (!item) return;
+
+    var step = product.qtyStep || CONFIG.defaultQtyStep;
+    var minQty = product.minQty || CONFIG.defaultMinQty;
+    var newQty = item.quantity + (direction * step);
+
+    if (direction < 0 && newQty < minQty) {
+        removeFromCart(product.id);
+        return;
+    }
+
+    item.quantity = normalizeQuantity(product, newQty);
+    saveCart();
+    renderCartBadge();
+    renderCartModal();
+}
+
+function clearCart() {
+    cart = [];
+    saveCart();
+    renderCartBadge();
+    renderCartModal();
+}
+
+// Shared with the initial button markup in renderModalContent() below, so the
+// icon only needs to be written out once.
+var CART_ICON_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.4" fill="currentColor"/>' +
+    '<circle cx="18" cy="20" r="1.4" fill="currentColor"/><path d="M2.5 3h2.4l1.9 11.2a2 2 0 0 0 2 1.7h8.4a2 2 0 0 0 1.96-1.6L21 8H6.2" ' +
+    'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+// Rebuilds the Add to Cart button's full content (icon + badge) from scratch
+// every time, rather than only toggling classes on whatever's currently
+// there - the click handler below temporarily replaces the button's content
+// with a checkmark, and this is what's responsible for restoring the real
+// icon afterward, not just its highlight state. Called on modal open, and
+// again after the "Added" confirmation finishes so it reflects a click made
+// in this same dialog session too.
+function updateAddToCartButtonState() {
+    var btn = document.getElementById('add-to-cart-btn');
+    if (!btn || !currentProduct) return;
+
+    var item = cart.filter(function (i) { return i.productId === currentProduct.id; })[0];
+    var count = item ? (item.quantity > 99 ? '99+' : item.quantity) : '0';
+
+    btn.innerHTML = CART_ICON_SVG +
+        '<span id="add-to-cart-badge" class="cta-badge"' + (item ? '' : ' hidden') + '>' + count + '</span>';
+
+    if (item) {
+        btn.classList.add('in-cart');
+        btn.setAttribute('aria-label', 'In cart: ' + item.quantity + '. Go to cart.');
+        btn.setAttribute('data-tooltip', 'In cart: ' + item.quantity + ' \u2014 go to cart');
+    } else {
+        btn.classList.remove('in-cart');
+        btn.setAttribute('aria-label', 'Add to Cart');
+        btn.setAttribute('data-tooltip', 'Add to Cart');
+    }
+}
+
+function renderCartBadge() {
+    var badge = document.getElementById('cart-badge');
+    var cartBtn = document.getElementById('cart-btn');
+    if (!badge) return;
+
+    var count = getCartCount();
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.hidden = false;
+        if (cartBtn) {
+            cartBtn.classList.add('has-items');
+            cartBtn.setAttribute('aria-label', 'Go to cart, ' + count + (count === 1 ? ' item' : ' items'));
+        }
+    } else {
+        badge.textContent = '0';
+        badge.hidden = true;
+        if (cartBtn) {
+            cartBtn.classList.remove('has-items');
+            cartBtn.setAttribute('aria-label', 'Open cart');
+        }
+    }
+}
+
+// One line per cart entry, plus a grand total - this is what actually reaches
+// the business, since there is no backend to place the order through otherwise.
+function generateCartWhatsAppMessage() {
+    var message = CONFIG.greeting + '\n\n';
+    var grandTotal = 0;
+
+    cart.forEach(function (item) {
+        var product = findProductById(item.productId);
+        if (!product) return;
+        var pricing = calculatePricing(product, item.quantity);
+        grandTotal += pricing.total;
+
+        message += '• ' + product.name + ' x' + item.quantity;
+        if (pricing.discount > 0) {
+            message += ' (' + pricing.discount + '% off)';
+        }
+        message += ' - ' + formatCurrency(pricing.total) + '\n';
+    });
+
+    message += '\nGrand Total: ' + formatCurrency(grandTotal) + '\n\nThank you!';
+    return message;
+}
+
+function renderCartModal() {
+    var body = document.getElementById('cart-body');
+    var footer = document.getElementById('cart-footer');
+    var clearBtn = document.getElementById('cart-clear-btn');
+    if (!body) return;
+
+    if (cart.length === 0) {
+        body.innerHTML = '<p class="cart-empty">Your cart is empty. Add a few products to build a bulk order.</p>';
+        footer.hidden = true;
+        clearBtn.hidden = true;
+        return;
+    }
+
+    footer.hidden = false;
+    clearBtn.hidden = false;
+
+    var html = '';
+    var grandTotal = 0;
+
+    cart.forEach(function (item) {
+        var product = findProductById(item.productId);
+        if (!product) return;
+
+        var pricing = calculatePricing(product, item.quantity);
+        grandTotal += pricing.total;
+        var images = getProductImages(product);
+
+        html +=
+            '<div class="cart-item" data-product-id="' + escapeHtml(product.id) + '">' +
+            '<img src="' + escapeHtml(images[0]) + '" alt="' + escapeHtml(product.name) + '" class="cart-item-image">' +
+            '<div class="cart-item-info">' +
+            '<div class="cart-item-name">' + escapeHtml(product.name) + '</div>' +
+            '<div class="cart-item-unit">' + formatCurrency(pricing.unitPrice) + ' each' +
+                (pricing.discount > 0 ? ' · ' + pricing.discount + '% off' : '') +
+            '</div>' +
+            '<div class="cart-item-stepper">' +
+            '<button type="button" class="cart-qty-btn cart-qty-decrease" aria-label="Decrease quantity of ' + escapeHtml(product.name) + '">&minus;</button>' +
+            '<span class="cart-qty-value">' + item.quantity + '</span>' +
+            '<button type="button" class="cart-qty-btn cart-qty-increase" aria-label="Increase quantity of ' + escapeHtml(product.name) + '">+</button>' +
+            '</div>' +
+            '</div>' +
+            '<div class="cart-item-total">' +
+            '<div class="cart-item-price">' + formatCurrency(pricing.total) + '</div>' +
+            '<button type="button" class="cart-item-remove" aria-label="Remove ' + escapeHtml(product.name) + ' from cart">&times;</button>' +
+            '</div>' +
+            '</div>';
+    });
+
+    body.innerHTML = html;
+    document.getElementById('cart-grand-total').textContent = formatCurrency(grandTotal);
+
+    var checkoutBtn = document.getElementById('cart-checkout-btn');
+    var encoded = encodeURIComponent(generateCartWhatsAppMessage());
+    var phoneNumber = CONFIG.whatsappNumber.replace(/\D/g, '');
+    checkoutBtn.href = 'https://wa.me/' + phoneNumber + '?text=' + encoded;
+}
+
+function openCartModal() {
+    cartModalOpen = true;
+    lastFocusedElement = document.activeElement;
+
+    var overlay = document.getElementById('cart-overlay');
+    var modal = document.getElementById('cart-modal');
+
+    renderCartModal();
+    overlay.style.display = 'flex';
+
+    document.querySelector('.site-header').setAttribute('aria-hidden', 'true');
+    document.getElementById('product-grid').setAttribute('aria-hidden', 'true');
+
+    var closeBtn = document.getElementById('cart-close');
+    setTimeout(function () {
+        closeBtn.focus();
+    }, 100);
+
+    setupFocusTrap(modal);
+}
+
+function closeCartModal() {
+    var overlay = document.getElementById('cart-overlay');
+
+    document.querySelector('.site-header').removeAttribute('aria-hidden');
+    document.getElementById('product-grid').removeAttribute('aria-hidden');
+
+    overlay.style.display = 'none';
+    cartModalOpen = false;
+    focusTrapElements = [];
+
+    if (lastFocusedElement) {
+        lastFocusedElement.focus();
+        lastFocusedElement = null;
+    }
+}
+
+// Wired once from init(), same reasoning as setupNotifyModal(): this modal's
+// markup is static in index.html (unlike the product modal, which rebuilds its
+// innerHTML on every open), so its handlers only need binding once. cart-body's
+// item rows do get rebuilt on every cart change, so their buttons are handled
+// through one delegated listener rather than being rebound per render.
+function setupCartModal() {
+    var openBtn = document.getElementById('cart-btn');
+    var closeBtn = document.getElementById('cart-close');
+    var overlay = document.getElementById('cart-overlay');
+    var clearBtn = document.getElementById('cart-clear-btn');
+    var body = document.getElementById('cart-body');
+
+    if (!openBtn) return;
+
+    openBtn.addEventListener('click', openCartModal);
+    closeBtn.addEventListener('click', closeCartModal);
+
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) {
+            closeCartModal();
+        }
+    });
+
+    clearBtn.addEventListener('click', clearCart);
+
+    body.addEventListener('click', function (e) {
+        var itemEl = e.target.closest('.cart-item');
+        if (!itemEl) return;
+
+        var product = findProductById(itemEl.getAttribute('data-product-id'));
+        if (!product) return;
+
+        if (e.target.closest('.cart-qty-decrease')) {
+            changeCartQuantity(product, -1);
+        } else if (e.target.closest('.cart-qty-increase')) {
+            changeCartQuantity(product, 1);
+        } else if (e.target.closest('.cart-item-remove')) {
+            removeFromCart(product.id);
+        }
+    });
+}
+
 // Theme
 // The inline script in index.html already set data-theme before first paint.
-// This only keeps the button label in sync and saves the visitor's choice.
+// This only keeps the button icon in sync and saves the visitor's choice.
 var THEME_KEY = 'toystore-theme';
+
+var SUN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/>' +
+    '<g stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+    '<line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/>' +
+    '<line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/>' +
+    '<line x1="4.9" y1="4.9" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="19.1" y2="19.1"/>' +
+    '<line x1="4.9" y1="19.1" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="19.1" y2="4.9"/>' +
+    '</g></svg>';
+
+var MOON_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" ' +
+    'd="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 0 0 11.1 11.1z"/></svg>';
 
 function currentTheme() {
     return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
@@ -346,9 +672,12 @@ function applyTheme(theme) {
 
     var btn = document.getElementById('theme-toggle');
     if (!btn) return;
+    // Icon (and tooltip/aria-label) show the theme a click switches TO, same
+    // sense the old text label used ("Light mode" meant "switch to light").
     var next = theme === 'light' ? 'dark' : 'light';
-    btn.textContent = next === 'light' ? 'Light mode' : 'Dark mode';
+    btn.innerHTML = next === 'light' ? SUN_ICON : MOON_ICON;
     btn.setAttribute('aria-label', 'Switch to ' + next + ' theme');
+    btn.setAttribute('data-tooltip', next === 'light' ? 'Light mode' : 'Dark mode');
 }
 
 function setupThemeToggle() {
@@ -615,23 +944,16 @@ function renderModalContent() {
     }).join('');
 
     // Discount tiers
-    var tierList = '';
-    var currDiscountTiers = getDiscountTiers(currentProduct);
-    if (currDiscountTiers && currDiscountTiers.length > 0) {
-        var sorted = currDiscountTiers.slice().sort(function(a, b) {
-            return a.minQty - b.minQty;
-        });
-        tierList = sorted.map(function(tier) {
-            return '<div>' + tier.minQty + '+ units: ' + tier.percent + '% off</div>';
-        }).join('');
-    }
-
-    var tierPanel = tierList ?
-        '<div class="discount-panel">' +
-        '<div class="discount-panel-title">Bulk Pricing:</div>' +
-        tierList +
-        '</div>' : '';
-
+        var tierList = '';
+        var currDiscountTiers = getDiscountTiers(currentProduct);
+        if (currDiscountTiers && currDiscountTiers.length > 0) {
+            var sorted = currDiscountTiers.slice().sort(function(a, b) {
+                return a.minQty - b.minQty;
+            });
+            tierList = sorted.map(function(tier) {
+                return 'Add ' + tier.minQty + '+ units: ' + tier.percent + '% off\n';
+            }).join('');
+        }
     var thumbsHtml = images.length > 1 ? '<div class="gallery-thumbs">' + thumbnails + '</div>' : '';
 
     var navHtml = images.length > 1 ?
@@ -643,6 +965,10 @@ function renderModalContent() {
         '</button>' +
         '<div class="gallery-counter" aria-hidden="true"><span id="gallery-counter-current">1</span> / ' + images.length + '</div>'
         : '';
+
+    var maxDiscount = getMaxDiscount(currentProduct);
+    var saveUpToBadge = maxDiscount > 0 ?
+        '<div class="save-up-to-badge" data-tooltip="'+tierList+'">Save up to ' + maxDiscount + '%</div>' : '';
 
     modal.innerHTML =
         '<button id="modal-close" class="modal-close" aria-label="Close product details">&times;</button>' +
@@ -659,26 +985,40 @@ function renderModalContent() {
         '<p class="modal-tagline">' + escapeHtml(currentProduct.tagline) + '</p>' +
         '<p class="modal-description">' + escapeHtml(currentProduct.description) + '</p>' +
         '<div class="modal-age">Recommended: ' + escapeHtml(currentProduct.ageRange) + '</div>' +
-        tierPanel +
-        '<div class="quantity-section">' +
-        '<label for="quantity-input" class="quantity-label">Quantity</label>' +
-        '<div class="quantity-note">(Minimum: ' + currentProduct.minQty + ')</div>' +
-        '<div class="quantity-stepper">' +
-        '<button id="qty-decrease" class="qty-btn" aria-label="Decrease quantity">−</button>' +
-        '<input type="number" id="quantity-input" class="qty-input" value="' + currentQuantity +
+        // Unit price, the quantity stepper, and the resulting total now live in
+        // one merged line ("₹150 × [stepper] = ₹750 ₹697.50") instead of a
+        // separate quantity section and a 4-row price breakdown. The stepper
+        // itself (#qty-decrease/#quantity-input/#qty-increase) is built once
+        // here and never rebuilt - only the two text spans either side of it
+        // are touched by updatePriceDisplay() on every quantity change, so the
+        // stepper buttons' event listeners (bound once in attachModalHandlers)
+        // are never destroyed by a price refresh.
+        '<div id="price-display" class="price-display" role="status" aria-live="polite">' +
+        saveUpToBadge +
+        '<div class="price-content-row" >' +
+        '<span id="price-unit-text" class="price-unit"></span>' +
+        '<span class="price-times" aria-hidden="true">\u00d7</span>' +
+        '<div class="quantity-stepper" >' +
+        '<button id="qty-decrease" class="qty-btn" aria-label="Decrease quantity">\u2212</button>' +
+        '<input type="number" id="quantity-input" class="qty-input" inputmode="numeric" value="' + currentQuantity +
 		'" min="' + currentProduct.minQty + '" step="' + currentProduct.qtyStep + '" aria-label="Quantity">' +
         '<button id="qty-increase" class="qty-btn" aria-label="Increase quantity">+</button>' +
         '</div>' +
+        '<span class="price-equals" aria-hidden="true">=</span>' +
+        '<span id="price-result" class="price-result"></span>' +
         '</div>' +
-        '<div id="price-display" class="price-display" role="status" aria-live="polite"></div>' +
-        '<div id="incentive-display" class="incentive-display"></div>' +
-        '<a id="whatsapp-cta" class="whatsapp-btn" href="#" target="_blank" rel="noopener">' +
-        'Order via WhatsApp <span aria-hidden="true">💬</span>' +
+        '</div>' +
+        '<div class="modal-cta-group">' +
+        '<button type="button" id="add-to-cart-btn" class="add-to-cart-btn" aria-label="Add to Cart" data-tooltip="Add to Cart"></button>' +
+        '<a id="whatsapp-cta" class="whatsapp-btn" href="#" target="_blank" rel="noopener" aria-label="Order via WhatsApp" data-tooltip="Order via WhatsApp">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12.032 2.001c-5.522 0-9.998 4.477-9.998 9.999 0 1.764.461 3.44 1.267 4.895L2 22l5.245-1.372a9.96 9.96 0 0 0 4.787 1.22h.003c5.522 0 9.998-4.477 9.998-9.999 0-5.521-4.477-9.998-9.999-9.998zm0 18.174h-.002a8.15 8.15 0 0 1-4.157-1.14l-.297-.176-3.087.809.824-3.01-.194-.309a8.164 8.164 0 0 1-1.254-4.35c0-4.51 3.671-8.181 8.183-8.181 2.186 0 4.24.851 5.786 2.398a8.131 8.131 0 0 1 2.394 5.788c0 4.512-3.671 8.171-8.196 8.171z"/></svg>' +
         '</a>' +
+        '</div>' +
         '</div>' +
         '</div>';
 
     updatePriceDisplay();
+    updateAddToCartButtonState();
     attachModalHandlers();
 }
 
@@ -687,40 +1027,39 @@ function updatePriceDisplay() {
     if (!currentProduct) return;
 
     var pricing = calculatePricing(currentProduct, currentQuantity);
-    var display = document.getElementById('price-display');
-    var incentiveDisplay = document.getElementById('incentive-display');
+    var unitText = document.getElementById('price-unit-text');
+    var result = document.getElementById('price-result');
 
-    var html = '<div class="price-row">' +
-        '<span>Unit Price:</span>' +
-        '<span>' + formatCurrency(pricing.unitPrice) + '</span>' +
-        '</div>';
-
-    if (pricing.discount > 0) {
-        html += '<div class="price-row">' +
-            '<span>Discount (' + pricing.discount + '%):</span>' +
-            '<span class="discount-amount">&minus;' + formatCurrency(pricing.discountAmount) + '</span>' +
-            '</div>';
+    if (unitText) {
+        unitText.textContent = formatCurrency(pricing.unitPrice);
     }
 
-    html += '<div class="price-row price-row-total">' +
-        '<span>Total:</span>' +
-        '<span>' + formatCurrency(pricing.total) + '</span>' +
-        '</div>';
-
-    if (pricing.discount > 0) {
-        html += '<div class="price-row savings-note">You save ' + formatCurrency(pricing.discountAmount) + '!</div>';
+    if (result) {
+        var resultHtml = '';
+        if (pricing.discount > 0) {
+            // pricing.subtotal is unitPrice * qty before any discount - shown
+            // struck through next to the actual (discounted) total, so the
+            // saving is visible at a glance without a separate line for it.
+            resultHtml += '<s class="price-strike">' + formatCurrency(pricing.subtotal) + '</s> ';
+        }
+        resultHtml += '<strong class="price-final">' + formatCurrency(pricing.total) + '</strong>';
+        if (pricing.discount > 0) {
+            resultHtml += '<span class="price-discount-tag">' + pricing.discount + '% off</span>';
+        }
+        result.innerHTML = resultHtml;
     }
 
-    display.innerHTML = html;
-
-    // Incentive
+    // The + button's tooltip shows just the next reachable discount, not the
+    // full tier list, and it updates on every quantity change rather than
+    // being fixed at modal-open time.
     var nextTier = getNextTier(currentProduct, currentQuantity);
-    if (nextTier) {
-        incentiveDisplay.innerHTML =
-            '<div class="incentive-note"><span aria-hidden="true">💡</span> Add ' + nextTier.itemsNeeded + ' more to save ' +
-			nextTier.percent + '%</div>';
-    } else {
-        incentiveDisplay.innerHTML = '';
+    var increaseBtn = document.getElementById('qty-increase');
+    if (increaseBtn) {
+        if (nextTier) {
+            increaseBtn.setAttribute('data-tooltip', 'Add ' + nextTier.itemsNeeded + ' more for ' + nextTier.percent + '% off');
+        } else {
+            increaseBtn.removeAttribute('data-tooltip');
+        }
     }
 
     updateStepperState();
@@ -795,6 +1134,36 @@ function attachModalHandlers() {
 
     closeBtn.addEventListener('click', closeModal);
 
+    var addToCartBtn = document.getElementById('add-to-cart-btn');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', function () {
+            if (addToCartBtn.classList.contains('in-cart')) {
+                // Already added (either from an earlier visit or a click earlier in
+                // this session) - the button now acts as a shortcut to the cart
+                // instead of stacking on more of the same quantity unasked.
+                closeModal();
+                openCartModal();
+                return;
+            }
+
+            addToCart(currentProduct, currentQuantity);
+
+            // Quiet confirmation on the button itself rather than a toast - this
+            // modal has no toast system. Once it finishes, updateAddToCartButtonState()
+            // rebuilds the icon+badge from the real cart data rather than restoring
+            // saved markup, so the highlight reflects the click that just happened -
+            // in the same dialog session, not just on the next time it's opened.
+            addToCartBtn.innerHTML = '<span aria-hidden="true">\u2713</span>';
+            addToCartBtn.classList.add('in-cart');
+            addToCartBtn.disabled = true;
+
+            setTimeout(function () {
+                addToCartBtn.disabled = false;
+                updateAddToCartButtonState();
+            }, 1400);
+        });
+    }
+
     qtyInput.addEventListener('change', function() {
         currentQuantity = validateQuantity(currentProduct, qtyInput.value);
         qtyInput.value = currentQuantity;
@@ -819,6 +1188,18 @@ function attachModalHandlers() {
         currentQuantity = normalizeQuantity(currentProduct, newQty);
         qtyInput.value = currentQuantity;
         updatePriceDisplay();
+
+        // Touch devices have no :hover, so the CSS tooltip above never appears
+        // there on its own - this nudges it into view briefly on tap instead,
+        // alongside the normal increment (the tooltip is supplementary info,
+        // not a separate action, so there's no harm in both happening at once).
+        if (increaseBtn.hasAttribute('data-tooltip')) {
+            increaseBtn.classList.add('tooltip-visible');
+            clearTimeout(increaseBtn._tooltipTimer);
+            increaseBtn._tooltipTimer = setTimeout(function () {
+                increaseBtn.classList.remove('tooltip-visible');
+            }, 1800);
+        }
     });
 
     var images = getProductImages(currentProduct);
@@ -950,9 +1331,12 @@ function init() {
         metaDescription.setAttribute('content', CONFIG.siteDescription);
     }
 
+    cart = loadCart();
     setupThemeToggle();
     renderProducts();
     setupNotifyModal();
+    setupCartModal();
+    renderCartBadge();
 
     // Grid click delegation
     var grid = document.getElementById('product-grid');
@@ -989,10 +1373,12 @@ function init() {
                 closeModal();
             } else if (notifyModalOpen) {
                 closeNotifyModal();
+            } else if (cartModalOpen) {
+                closeCartModal();
             }
         }
 
-        if (e.key === 'Tab' && (currentProduct || notifyModalOpen)) {
+        if (e.key === 'Tab' && (currentProduct || notifyModalOpen || cartModalOpen)) {
             handleFocusTrap(e);
         }
     });

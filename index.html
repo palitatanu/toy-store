@@ -44,7 +44,13 @@
                 </h1>
                 <p class="site-subtitle" id="site-subtitle"></p>
             </div>
-            <button type="button" class="theme-toggle" id="theme-toggle">Light mode</button>
+            <div class="header-actions">
+                <button type="button" class="cart-btn" id="cart-btn" aria-label="Open cart">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="18" cy="20" r="1.4" fill="currentColor"/><path d="M2.5 3h2.4l1.9 11.2a2 2 0 0 0 2 1.7h8.4a2 2 0 0 0 1.96-1.6L21 8H6.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span id="cart-badge" class="cart-badge" hidden>0</span>
+                </button>
+                <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+            </div>
         </div>
     </header>
 
@@ -87,6 +93,28 @@
                         </span>
                     </div>
                     <p class="notify-success-text">Thanks! We'll let you know here when something new lands.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cart-overlay" class="modal-overlay cart-overlay" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+        <div id="cart-modal" class="modal cart-modal">
+            <button type="button" id="cart-close" class="modal-close" aria-label="Close cart">&times;</button>
+            <div class="cart-modal-content">
+                <div class="cart-modal-header">
+                    <h2 id="cart-title" class="cart-modal-title">Your Cart</h2>
+                    <button type="button" id="cart-clear-btn" class="cart-clear-btn" hidden>Clear cart</button>
+                </div>
+                <div id="cart-body" class="cart-body"></div>
+                <div id="cart-footer" class="cart-footer" hidden>
+                    <div class="cart-total-row">
+                        <span>Grand Total</span>
+                        <span id="cart-grand-total">₹0</span>
+                    </div>
+                    <a id="cart-checkout-btn" class="whatsapp-btn" href="#" target="_blank" rel="noopener">
+                        Checkout via WhatsApp <svg viewBox="0 0 24 24" aria-hidden="true" class="btn-icon"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12.032 2.001c-5.522 0-9.998 4.477-9.998 9.999 0 1.764.461 3.44 1.267 4.895L2 22l5.245-1.372a9.96 9.96 0 0 0 4.787 1.22h.003c5.522 0 9.998-4.477 9.998-9.999 0-5.521-4.477-9.998-9.999-9.998zm0 18.174h-.002a8.15 8.15 0 0 1-4.157-1.14l-.297-.176-3.087.809.824-3.01-.194-.309a8.164 8.164 0 0 1-1.254-4.35c0-4.51 3.671-8.181 8.183-8.181 2.186 0 4.24.851 5.786 2.398a8.131 8.131 0 0 1 2.394 5.788c0 4.512-3.671 8.171-8.196 8.171z"/></svg>
+                    </a>
                 </div>
             </div>
         </div>
