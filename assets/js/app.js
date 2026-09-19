@@ -943,17 +943,6 @@ function renderModalContent() {
 		'" class="gallery-thumb" tabindex="0" role="button" data-image-index="' + i + '">';
     }).join('');
 
-    // Discount tiers
-        var tierList = '';
-        var currDiscountTiers = getDiscountTiers(currentProduct);
-        if (currDiscountTiers && currDiscountTiers.length > 0) {
-            var sorted = currDiscountTiers.slice().sort(function(a, b) {
-                return a.minQty - b.minQty;
-            });
-            tierList = sorted.map(function(tier) {
-                return 'Add ' + tier.minQty + '+ units: ' + tier.percent + '% off\n';
-            }).join('');
-        }
     var thumbsHtml = images.length > 1 ? '<div class="gallery-thumbs">' + thumbnails + '</div>' : '';
 
     var navHtml = images.length > 1 ?
@@ -967,8 +956,25 @@ function renderModalContent() {
         : '';
 
     var maxDiscount = getMaxDiscount(currentProduct);
-    var saveUpToBadge = maxDiscount > 0 ?
-        '<div class="save-up-to-badge" data-tooltip="'+tierList+'">Save up to ' + maxDiscount + '%</div>' : '';
+    var saveUpWrap = '';
+    if (maxDiscount > 0) {
+        // Full tier breakdown lives on the info icon's tooltip, not the badge
+        // itself - the badge stays a plain "Save up to X%" summary, and this
+        // is where someone can check what quantities actually unlock it.
+        var currDiscountTiers = getDiscountTiers(currentProduct);
+        var sortedTiers = currDiscountTiers.slice().sort(function(a, b) {
+            return a.minQty - b.minQty;
+        });
+        var tierTooltip = sortedTiers.map(function(tier) {
+            return 'Add '+tier.minQty + '+ units: ' + tier.percent + '% off';
+        }).join('\n');
+
+        saveUpWrap =
+            '<div class="save-up-wrap">' +
+            '<div class="save-up-to-badge">Save up to ' + maxDiscount + '%</div>' +
+            '<button type="button" class="save-info-btn" aria-label="Discount tiers" data-tooltip="' + escapeHtml(tierTooltip) + '">i</button>' +
+            '</div>';
+    }
 
     modal.innerHTML =
         '<button id="modal-close" class="modal-close" aria-label="Close product details">&times;</button>' +
@@ -994,7 +1000,7 @@ function renderModalContent() {
         // stepper buttons' event listeners (bound once in attachModalHandlers)
         // are never destroyed by a price refresh.
         '<div id="price-display" class="price-display" role="status" aria-live="polite">' +
-        saveUpToBadge +
+        saveUpWrap +
         '<div class="price-content-row" >' +
         '<span id="price-unit-text" class="price-unit"></span>' +
         '<span class="price-times" aria-hidden="true">\u00d7</span>' +
@@ -1201,6 +1207,17 @@ function attachModalHandlers() {
             }, 1800);
         }
     });
+
+    var saveInfoBtn = document.querySelector('.save-info-btn');
+    if (saveInfoBtn) {
+        saveInfoBtn.addEventListener('click', function () {
+            saveInfoBtn.classList.add('tooltip-visible');
+            clearTimeout(saveInfoBtn._tooltipTimer);
+            saveInfoBtn._tooltipTimer = setTimeout(function () {
+                saveInfoBtn.classList.remove('tooltip-visible');
+            }, 2200);
+        });
+    }
 
     var images = getProductImages(currentProduct);
     var mainImage = document.getElementById('gallery-main');

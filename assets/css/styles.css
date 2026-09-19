@@ -469,8 +469,8 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 
 @media (max-width: 639px) {
   .product-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
   }
 }
 
@@ -635,6 +635,40 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 .card-age {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+@media (max-width: 639px) {
+  /* Cards are now roughly half the width they were at 1 column, so the
+     padding and type sizes tuned for that wider card need to come down a
+     notch too, or text and the badge start crowding the edges. */
+  .card-content {
+    padding: 12px 12px 14px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .card-tagline {
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .card-price {
+    font-size: 16px;
+  }
+
+  .card-price-unit {
+    font-size: 12px;
+  }
+
+  .discount-badge {
+    top: 8px;
+    right: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
 }
 
 /* Modal Overlay */
@@ -894,6 +928,10 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 .modal-details {
   display: flex;
   flex-direction: column;
+  /* Same reasoning as .modal-gallery's min-width: 0 - grid items don't shrink
+     below their content's natural width by default, which could otherwise let
+     any non-wrapping content in here force this column wider than the screen. */
+  min-width: 0;
 }
 
 @media (max-width: 1023px) {
@@ -1047,6 +1085,7 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 }
 
 .price-unit {
+  flex-shrink: 0;
   font-family: var(--font-display);
   font-size: 17px;
   font-weight: 700;
@@ -1055,9 +1094,18 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 
 .price-times,
 .price-equals {
+  flex-shrink: 0;
   font-size: 15px;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+/* Fixed-width buttons/input inside were being compressed to fit the row
+   instead of the row wrapping cleanly around them - flex items shrink by
+   default even when their content has a fixed width. This is what "breaking"
+   looked like on narrow screens: squeezed, overlapping stepper controls. */
+.quantity-stepper {
+  flex-shrink: 0;
 }
 
 .price-result {
@@ -1068,6 +1116,24 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   /* Pushes the result to the row's right edge when there's room; when the row
      wraps on narrow screens this just becomes the start of its own line. */
   margin-left: auto;
+}
+
+@media (max-width: 639px) {
+  .price-line {
+    padding: 12px;
+    gap: 8px;
+    row-gap: 12px;
+  }
+
+  /* Rather than leaving it to wrap wherever it happens to run out of room,
+     force the result onto a clean second row every time on narrow screens -
+     predictable beats "usually fits". */
+  .price-result {
+    flex-basis: 100%;
+    margin-left: 0;
+    padding-top: 12px;
+    border-top: 1px dashed var(--hairline);
+  }
 }
 
 .price-strike {
@@ -1094,10 +1160,18 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 
 /* "Save up to X%" badge, overlaid on the product photo - a static summary of
    the best available discount, replacing the incentive banner that used to
-   compute this dynamically against the current quantity.*/
-.save-up-to-badge {
-  top: 0;
+   compute this dynamically against the current quantity. The info icon next
+   to it carries the actual tier breakdown as a tooltip, so the badge itself
+   stays a plain, uncluttered headline. */
+.save-up-wrap {
   bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.save-up-to-badge {
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
@@ -1111,18 +1185,40 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
   box-shadow: var(--shadow-sm);
 }
 
-/* 3. Configure the tooltip (::after) for multiline, width, and zeroed spacing */
-.save-up-to-badge::after {
-  /* Enable multiline and respect manual line breaks (\n) */
+.save-info-btn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 150ms ease;
+}
+
+.save-info-btn:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.save-info-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.save-info-btn::after {
   white-space: pre !important;
   display: inline-block !important;
-
-  /* Increase width and remove restrictions */
-  width: auto !important;
-  /* Optional: visual cleanup for the multiline layout */
- /* Adjust as needed, but keep right at 0 if required */
-  text-align: left !important;
-  overflow: visible !important;
+  width: max-content !important;
 }
 
 /* Two buttons in the product modal now: Add to Cart (stays in-page, builds a
@@ -1442,7 +1538,7 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 }
 
 .savings-note,
-.save-up-to-badge {
+.save-up-wrap {
   animation: fade-rise 260ms ease-out;
 }
 
