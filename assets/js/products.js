@@ -132,5 +132,107 @@ var PRODUCTS = [
             { minQty: 5, percent: 10 }
         ],
         placeholderHue: 180
+    },
+    {
+        id: 'sciencekit',
+        name: 'Junior Scientist Lab Kit',
+        tagline: 'Little Scientists, Big Discoveries!',
+        description: 'A fun introduction to science with simple experiments that encourage curiosity and discovery.',
+        price: 280,
+        minQty: 1,
+        qtyStep: 1,
+        maxQty: 15,
+        ageRange: '3+ years',
+        imageCount: 4,
+        discountTiers: [
+            { minQty: 5, percent: 7 },
+            { minQty: 12, percent: 15 }
+        ],
+        placeholderHue: 180
+    },
+    {
+        id: 'electro-magnetic',
+        name: 'Electromagnetic Kit',
+        tagline: 'Discover the Power of Magnetism',
+        description: 'Explore magnets, coils and electromagnetism through exciting hands-on experiments.',
+        price: 340,
+        minQty: 1,
+        qtyStep: 1,
+        maxQty: 15,
+        ageRange: '3+ years',
+        imageCount: 4,
+        discountTiers: [
+            { minQty: 5, percent: 7 },
+            { minQty: 12, percent: 15 }
+        ],
+        placeholderHue: 180
+    },
+    {
+        id: 'crossword',
+        name: 'Crossword',
+        tagline: 'Play with Words, Challenge Your Mind',
+        description: 'Build vocabulary and sharpen spelling, thinking and problem-solving skills with every puzzle.',
+        price: 190,
+        minQty: 1,
+        qtyStep: 1,
+        maxQty: 15,
+        ageRange: '6+ years',
+        imageCount: 2,
+        discountTiers: [
+            { minQty: 5, percent: 7 },
+            { minQty: 12, percent: 15 }
+        ],
+        placeholderHue: 180
+    },
+    {
+        id: 'india-map-puzzle',
+        name: 'India Map Puzzle',
+        tagline: 'Explore India, Piece by Piece',
+        description: 'Discover Indian states, geography and landmarks while developing memory and spatial skills.',
+        price: 250,
+        minQty: 1,
+        qtyStep: 1,
+        maxQty: 15,
+        ageRange: '4+ years',
+        imageCount: 3,
+        discountTiers: [
+            { minQty: 5, percent: 7 },
+            { minQty: 12, percent: 15 }
+        ],
+        placeholderHue: 180
+    },
+    {
+        id: 'mechanix',
+        name: 'Mechanix',
+        tagline: 'Build It. Create It. Discover It.',
+        description: 'Build creative models while developing engineering, logical thinking and hands-on problem-solving skills.',
+        price: 395,
+        minQty: 1,
+        qtyStep: 1,
+        maxQty: 15,
+        ageRange: '4+ years',
+        imageCount: 3,
+        discountTiers: [
+            { minQty: 5, percent: 7 },
+            { minQty: 12, percent: 15 }
+        ],
+        placeholderHue: 180
+    },
+    {
+        id: 'learnbook',
+        name: 'LearnBook',
+        tagline: 'Learn, Explore & Grow Every Day',
+        description: 'An engaging learning book designed to build knowledge, curiosity and essential early-learning skills.',
+        price: 250,
+        minQty: 1,
+        qtyStep: 1,
+        maxQty: 15,
+        ageRange: '3+ years',
+        imageCount: 5,
+        discountTiers: [
+            { minQty: 5, percent: 7 },
+            { minQty: 12, percent: 15 }
+        ],
+        placeholderHue: 180
     }
 ];
