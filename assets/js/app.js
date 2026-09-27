@@ -689,6 +689,23 @@ function setupThemeToggle() {
     });
 }
 
+// Builds the scrolling announcement strip above the notify section from
+// CONFIG.announcements. The content is duplicated once so the CSS animation
+// (translateX 0 -> -50%) loops seamlessly with no visible seam or jump.
+function renderTicker() {
+    var track = document.getElementById('ticker-track');
+    if (!track || !CONFIG.announcements || CONFIG.announcements.length === 0) return;
+
+    var itemsHtml = CONFIG.announcements.map(function (text) {
+        return '<span class="ticker-item">' + escapeHtml(text) + '</span>';
+    }).join('<span class="ticker-sep" aria-hidden="true">\u2022</span>');
+
+    track.innerHTML = itemsHtml +
+        '<span class="ticker-sep" aria-hidden="true">\u2022</span>' +
+        itemsHtml +
+        '<span class="ticker-sep" aria-hidden="true">\u2022</span>';
+}
+
 // Render product grid
 function renderProducts() {
     var grid = document.getElementById('product-grid');
@@ -1350,6 +1367,7 @@ function init() {
 
     cart = loadCart();
     setupThemeToggle();
+    renderTicker();
     renderProducts();
     setupNotifyModal();
     setupCartModal();

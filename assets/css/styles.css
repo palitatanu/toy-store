@@ -1582,6 +1582,62 @@ The :focus rules further downremain as a fallback for browsers without :focus-vi
 ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
+/* Ticker Banner - scrolling announcements above the notify section. Content
+   is duplicated in the track (see renderTicker() in app.js) so translateX
+   0 -> -50% loops with no visible seam. */
+.ticker-banner {
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-tint), var(--surface));
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 11px 0;
+  margin-bottom: 24px;
+}
+
+.ticker-track {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: ticker-scroll 22s linear infinite;
+  will-change: transform;
+}
+
+.ticker-item {
+  padding: 0 22px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.ticker-sep {
+  color: var(--primary);
+  font-size: 15px;
+  line-height: 1;
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The global reduced-motion rule elsewhere only shortens animation-duration,
+     which would leave this infinite loop running near-instantly instead of
+     stopping - a continuous scroller needs to actually stop, not just speed
+     up, so it's turned off outright here. Horizontal scroll is left available
+     as a manual fallback so every item is still reachable. */
+  .ticker-track {
+    animation: none !important;
+  }
+
+  .ticker-banner {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* Notify Banner */
 .notify-banner {
   display: flex;

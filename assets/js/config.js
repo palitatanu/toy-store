@@ -22,7 +22,15 @@ var CONFIG = {
 
     // Site metadata
     siteTitle: 'Deep-Ash Collections - Bulk Toys for Parties & Events',
-    siteDescription: 'Quality toys with bulk discounts. Perfect for birthday parties, school events, and celebrations.',
+    siteDescription: 'Quality Educational toys. Perfect for birthday parties, school events, and celebrations.',
+
+    // Rolling banner shown above the notify section. Edit this list to change
+    // what scrolls through - each string becomes one item in the loop.
+    announcements: [
+        'Free Shipping above ₹1299',
+        'Discounts on Bulk Orders',
+        'Hamper Collection Coming Soon'
+    ],
 
     // Minimum viable quantity values (fallback if product data is malformed)
     defaultMinQty: 1,
