@@ -9,6 +9,9 @@ var notifyModalOpen = false;
 var cartModalOpen = false;
 var cart = []; // [{ productId, quantity }] - populated from localStorage in init()
 var CART_KEY = 'toystore-cart';
+var currentCategory = 'toys'; // toggled by the category tabs; products without
+                               // a category field (the original toy catalog)
+                               // are treated as 'toys' so they didn't need editing
 
 // Escapes quotes too: these values are interpolated into HTML attributes, not just text
 function escapeHtml(text) {
@@ -707,6 +710,31 @@ function renderTicker() {
 }
 
 // Render product grid
+// Wires the Toys/Gifting tabs above the grid. Switching category just
+// updates currentCategory and asks renderProducts() to redraw - the tabs
+// themselves are static markup in index.html, so this only needs to run once.
+function setupCategoryTabs() {
+    var tabs = document.querySelectorAll('.category-tab');
+    if (!tabs.length) return;
+
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var category = tab.getAttribute('data-category');
+            if (category === currentCategory) return;
+
+            currentCategory = category;
+
+            tabs.forEach(function (t) {
+                var isActive = t === tab;
+                t.classList.toggle('is-active', isActive);
+                t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+
+            renderProducts();
+        });
+    });
+}
+
 function renderProducts() {
     var grid = document.getElementById('product-grid');
     grid.innerHTML = '';
@@ -716,11 +744,17 @@ function renderProducts() {
         return;
     }
 
+    var renderedCount = 0;
+
     PRODUCTS.forEach(function (product, index) {
+        var productCategory = product.category || 'toys';
+        if (productCategory !== currentCategory) return;
+
         if (!product.name || !product.price || !product.imageCount) {
             console.warn('Product missing required fields:', product);
             return;
         }
+        renderedCount++;
         var card = document.createElement('article');
         card.className = 'product-card';
         card.setAttribute('role', 'button');
@@ -757,7 +791,7 @@ function renderProducts() {
                 '<div class="card-price">'+ formatCurrency(product.price) +
                     ' <span class="card-price-unit">per unit</span>' +
                 '</div>' +
-                '<div class="card-age">' + escapeHtml(product.ageRange) + '</div>' +
+                (product.ageRange ? '<div class="card-age">' + escapeHtml(product.ageRange) + '</div>' : '') +
             '</div>';
 
         card.baseImage = images[0];
@@ -775,6 +809,10 @@ function renderProducts() {
 
         grid.appendChild(card);
     });
+
+    if (renderedCount === 0) {
+        grid.innerHTML = '<div class="grid-empty">No products in this category yet.</div>';
+    }
 }
 
 // Open modal for product
@@ -1007,7 +1045,11 @@ function renderModalContent() {
         '<h1 id="modal-title" class="modal-title">' + escapeHtml(currentProduct.name) + '</h1>' +
         '<p class="modal-tagline">' + escapeHtml(currentProduct.tagline) + '</p>' +
         '<p class="modal-description">' + escapeHtml(currentProduct.description) + '</p>' +
-        '<div class="modal-age">Recommended: ' + escapeHtml(currentProduct.ageRange) + '</div>' +
+        (currentProduct.ageRange ? '<div class="modal-age">Recommended: ' + escapeHtml(currentProduct.ageRange) + '</div>' : '') +
+        (currentProduct.features && currentProduct.features.length ?
+            '<ul class="modal-features">' +
+            currentProduct.features.map(function (f) { return '<li>' + escapeHtml(f) + '</li>'; }).join('') +
+            '</ul>' : '') +
         // Unit price, the quantity stepper, and the resulting total now live in
         // one merged line ("₹150 × [stepper] = ₹750 ₹697.50") instead of a
         // separate quantity section and a 4-row price breakdown. The stepper
@@ -1368,6 +1410,7 @@ function init() {
     cart = loadCart();
     setupThemeToggle();
     renderTicker();
+    setupCategoryTabs();
     renderProducts();
     setupNotifyModal();
     setupCartModal();
