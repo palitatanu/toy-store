@@ -654,6 +654,79 @@ var SUN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="
 var MOON_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" ' +
     'd="M20.4 14.7A8.5 8.5 0 1 1 9.3 3.6a7 7 0 0 0 11.1 11.1z"/></svg>';
 
+// Browser-chrome colour per category. Gifting uses the Diwali palette.
+var THEME_COLORS = {
+    toys:    { light: '#FFFFFF', dark: '#1C1F24' },
+    gifting: { light: '#FFF3DC', dark: '#1A0B10' }
+};
+
+function updateThemeColorMeta(theme) {
+    var meta = document.getElementById('meta-theme-color');
+    if (!meta) return;
+    var set = THEME_COLORS[currentCategory] || THEME_COLORS.toys;
+    meta.setAttribute('content', theme === 'light' ? set.light : set.dark);
+}
+
+// Diwali theme: the Gifting tab sets data-category="gifting" on <html>, and the
+// "Diwali theme" block in styles.css re-skins every colour token (in both light
+// and dark mode). Toys removes the attribute and the normal theme returns.
+// Deliberately not saved - each visit starts on Toys, same as the tab itself.
+// Builds the string of fairy lights under the header: a row of 96px "swags"
+// (matching the SVG wire in styles.css), three bulbs each, enough to span the
+// screen. Colours cycle through a festive palette and each bulb gets its own
+// delay so they flicker out of step instead of pulsing in unison.
+var LIGHT_COLORS = ['#FFC94A', '#FF6B35', '#E8344E', '#FFE08A', '#FF9F1C'];
+var LIGHT_SWAG_WIDTH = 96;
+var lightsBuiltFor = 0;
+
+function buildDiwaliLights() {
+    var header = document.querySelector('.site-header');
+    if (!header) return;
+
+    var el = header.querySelector('.diwali-lights');
+    if (!el) {
+        el = document.createElement('div');
+        el.className = 'diwali-lights';
+        el.setAttribute('aria-hidden', 'true');
+        header.appendChild(el);
+    }
+
+    var swags = Math.ceil(window.innerWidth / LIGHT_SWAG_WIDTH) + 1;
+    if (swags === lightsBuiltFor) return;
+    lightsBuiltFor = swags;
+
+    var html = '';
+    var n = 0;
+    for (var s = 0; s < swags; s++) {
+        html += '<div class="diwali-swag">';
+        for (var b = 0; b < 3; b++) {
+            var color = LIGHT_COLORS[n % LIGHT_COLORS.length];
+            var delay = ((n * 0.37) % 2.6).toFixed(2);
+            html += '<span class="diwali-bulb" style="--c:' + color + ';--d:-' + delay + 's"></span>';
+            n++;
+        }
+        html += '</div>';
+    }
+    el.innerHTML = html;
+}
+
+var lightsResizeTimer = null;
+window.addEventListener('resize', function () {
+    if (!lightsBuiltFor) return;
+    clearTimeout(lightsResizeTimer);
+    lightsResizeTimer = setTimeout(buildDiwaliLights, 150);
+});
+
+function applyCategoryTheme(category) {
+    if (category === 'gifting') {
+        buildDiwaliLights();
+        document.documentElement.setAttribute('data-category', 'gifting');
+    } else {
+        document.documentElement.removeAttribute('data-category');
+    }
+    updateThemeColorMeta(currentTheme());
+}
+
 function currentTheme() {
     return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
 }
@@ -668,10 +741,7 @@ function applyTheme(theme) {
 
     // Keep the browser's own chrome (Android address bar, iOS status bar strip)
     // matching the page instead of staying stuck on the light-mode default.
-    var themeColorMeta = document.getElementById('meta-theme-color');
-    if (themeColorMeta) {
-        themeColorMeta.setAttribute('content', theme === 'light' ? '#FFFFFF' : '#1C1F24');
-    }
+    updateThemeColorMeta(theme);
 
     var btn = document.getElementById('theme-toggle');
     if (!btn) return;
@@ -723,6 +793,7 @@ function setupCategoryTabs() {
             if (category === currentCategory) return;
 
             currentCategory = category;
+            applyCategoryTheme(category);
 
             tabs.forEach(function (t) {
                 var isActive = t === tab;
