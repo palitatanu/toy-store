@@ -28,7 +28,8 @@ var CONFIG = {
     // what scrolls through - each string becomes one item in the loop.
     announcements: [
         'Free Shipping above ₹1499',
-        'Discounts on Bulk Orders'
+        'Discounts on Bulk Orders',
+        'Pre-Order for Diwali accepted till 1st Nov'
     ],
 
     // Minimum viable quantity values (fallback if product data is malformed)
