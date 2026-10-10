@@ -21,15 +21,14 @@ var CONFIG = {
     sheetWebhookUrl: 'https://script.google.com/macros/s/AKfycbykknpps4mZNdUt-9xxmk5tKwCgYYh-WFzbjfaJ8gWFGUmVHk3ftkOXoPjsSPA_EaHo_A/exec',
 
     // Site metadata
-    siteTitle: 'Deep-Ash Collections - Bulk Toys for Parties & Events',
-    siteDescription: 'Quality Educational toys. Perfect for birthday parties, school events, and celebrations.',
+    siteTitle: 'Deep-Ash Collections - From playful learning to festive gifting, perfectly curated',
+    siteDescription: 'Spreading smiles with educational toys and beautifully curated gifts',
 
     // Rolling banner shown above the notify section. Edit this list to change
     // what scrolls through - each string becomes one item in the loop.
     announcements: [
-        'Free Shipping above ₹1299',
-        'Discounts on Bulk Orders',
-        'Hamper Collection Coming Soon'
+        'Free Shipping above ₹1499',
+        'Discounts on Bulk Orders'
     ],
 
     // Minimum viable quantity values (fallback if product data is malformed)
